@@ -1,0 +1,4 @@
+github.com/dgryski/trifles v0.0.0-20240922021506-5ecb8eeff266 h1:5rz/pQdiozFNqkbuaL6o8VpbTMwjbVogo7wKVIl/iNg=
+github.com/dgryski/trifles v0.0.0-20240922021506-5ecb8eeff266/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
+github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
