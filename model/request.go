@@ -55,7 +55,3 @@ func (r Request) String() string {
 func (r Request) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.String())
 }
-
-func (r Request) IsEmpty() bool {
-	return r.Type == ""
-}

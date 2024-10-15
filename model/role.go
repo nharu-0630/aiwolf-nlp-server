@@ -49,7 +49,7 @@ func Roles(num int) map[Role]int {
 			R_SEER:      1,
 			R_BODYGUARD: 1,
 			R_VILLAGER:  2,
-			R_MEDIUM:    1,
+			R_MEDIUM:    0,
 		}
 	}
 	return nil

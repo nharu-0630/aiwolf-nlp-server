@@ -1,7 +1,9 @@
 package core
 
 import (
-	"math/rand/v2"
+	"errors"
+	"log"
+	"math/rand"
 
 	"github.com/dgryski/trifles/uuid"
 	"github.com/gorilla/websocket"
@@ -10,42 +12,26 @@ import (
 )
 
 type Game struct {
-	GameID            string
-	Settings          model.Settings
-	Agents            []*model.Agent
-	CurrentGameStatus model.GameStatus
-	GameStatusByDay   map[int]*model.GameStatus
-	LastTalkIdxMap    map[*model.Agent]int
-	LastWhisperIdxMap map[*model.Agent]int
+	GameID            string                    // UUID
+	Settings          model.Settings            // 設定
+	Agents            []*model.Agent            // エージェント
+	CurrentGameStatus model.GameStatus          // 現在のゲーム状態
+	GameStatusByDay   map[int]*model.GameStatus // 日ごとのゲーム状態
+	LastTalkIdxMap    map[*model.Agent]int      // 最後に送信したトークのインデックス
+	LastWhisperIdxMap map[*model.Agent]int      // 最後に送信した囁きのインデックス
 }
 
 func NewGame(settings model.Settings, conns []*websocket.Conn) *Game {
+	log.Println("Creating new game...")
 	uuid := uuid.UUIDv4()
-
 	roles := model.Roles(len(conns))
 	if len(roles) == 0 {
-		panic("Invalid number of agents")
+		log.Panic("Invalid number of agents")
 	}
 	settings.RoleNumMap = model.Roles(len(conns))
-
-	agents := make([]*model.Agent, 0)
-	for i, conn := range conns {
-		role := model.R_VILLAGER
-		for r, n := range roles {
-			if n > 0 {
-				role = r
-				roles[r]--
-				break
-			}
-		}
-		agent, err := model.NewAgent(i, role, conn)
-		if err != nil {
-			panic(err)
-		}
-		agents = append(agents, agent)
-	}
-
-	game := &Game{
+	agents := createAgents(conns, roles)
+	log.Printf("Game created with ID: %s", uuid)
+	return &Game{
 		GameID:            uuid,
 		Settings:          settings,
 		Agents:            agents,
@@ -54,202 +40,228 @@ func NewGame(settings model.Settings, conns []*websocket.Conn) *Game {
 		LastTalkIdxMap:    make(map[*model.Agent]int),
 		LastWhisperIdxMap: make(map[*model.Agent]int),
 	}
-	return game
+}
+
+func createAgents(conns []*websocket.Conn, roles map[model.Role]int) []*model.Agent {
+	log.Println("Creating agents...")
+	agents := make([]*model.Agent, 0)
+	for i, conn := range conns {
+		role := assignRole(roles)
+		agent, err := model.NewAgent(i, role, conn)
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("Agent %d created with role %s", i, role)
+		agents = append(agents, agent)
+	}
+	return agents
+}
+
+func assignRole(roles map[model.Role]int) model.Role {
+	for r, n := range roles {
+		if n > 0 {
+			roles[r]--
+			log.Printf("Assigned role: %s", r)
+			return r
+		}
+	}
+	log.Println("Assigned default role: Villager")
+	return model.R_VILLAGER
+}
+
+func (g *Game) sendRequestToEveryone(request model.Request) {
+	log.Printf("Sending request %s to all agents", request)
+	for _, agent := range g.Agents {
+		g.sendRequest(agent, request)
+	}
 }
 
 func (g *Game) Start() {
+	log.Println("Starting game...")
 	for g.calcWinTeam() == model.T_NULL {
 		g.doDay()
 		g.doNight()
 		g.GameStatusByDay[g.CurrentGameStatus.Day] = &g.CurrentGameStatus
 		g.CurrentGameStatus = g.CurrentGameStatus.NextDay()
 	}
-	for _, agent := range g.Agents {
-		g.SendRequest(agent, model.R_FINISH)
-	}
+	g.sendRequestToEveryone(model.R_FINISH)
+	log.Println("Game finished")
 }
 
 func (g *Game) doDay() {
-	for _, agent := range g.Agents {
-		g.SendRequest(agent, model.R_DAILY_INITIALIZE)
-	}
+	log.Printf("Day %d: Starting day phase", g.CurrentGameStatus.Day)
+	g.sendRequestToEveryone(model.R_DAILY_INITIALIZE)
 	if config.TALK_ON_FIRST_DAY && g.CurrentGameStatus.Day == 0 {
 		g.doWhisper()
-		g.doTalk()
-	} else {
-		g.doTalk()
 	}
+	g.doTalk()
 }
 
 func (g *Game) doNight() {
-	for _, agent := range g.Agents {
-		g.SendRequest(agent, model.R_DAILY_FINISH)
-	}
+	log.Printf("Day %d: Starting night phase", g.CurrentGameStatus.Day)
+	g.sendRequestToEveryone(model.R_DAILY_FINISH)
 	if config.TALK_ON_FIRST_DAY && g.CurrentGameStatus.Day == 0 {
 		g.doWhisper()
 	}
-
-	var executed *model.Agent
-	candidates := make([]*model.Agent, 0)
 	if g.CurrentGameStatus.Day != 0 {
-		for i := 0; i < g.Settings.MaxRevote; i++ {
-			g.doVote()
-			candidates = g.getVotedCandidates(g.CurrentGameStatus.VoteList)
-			if len(candidates) == 1 {
-				executed = candidates[0]
-				break
-			}
-		}
-		if executed == nil {
-			rand.Shuffle(len(candidates), func(i, j int) {
-				candidates[i], candidates[j] = candidates[j], candidates[i]
-			})
-			executed = candidates[0]
-		}
-		if executed != nil {
-			g.CurrentGameStatus.StatusMap[*executed] = model.S_DEAD
-			g.CurrentGameStatus.ExecutedAgent = *executed
-		}
+		g.handleExecution()
 	}
-
 	g.doDivine()
-
 	if g.CurrentGameStatus.Day != 0 {
 		g.doWhisper()
 		g.doGuard()
+		g.handleAttack()
+	}
+}
 
-		var attacked *model.Agent
-		werewolfs := make([]*model.Agent, 0)
-		for agent, status := range g.CurrentGameStatus.StatusMap {
-			if status == model.S_ALIVE && agent.Role.Team == model.T_WEREWOLF {
-				werewolfs = append(werewolfs, &agent)
-			}
+func (g *Game) handleExecution() {
+	log.Println("Handling execution phase")
+	var executed *model.Agent
+	candidates := make([]*model.Agent, 0)
+	for i := 0; i < g.Settings.MaxRevote; i++ {
+		g.doVote()
+		candidates = g.getVotedCandidates(g.CurrentGameStatus.VoteList)
+		if len(candidates) == 1 {
+			executed = candidates[0]
+			break
 		}
-		if len(werewolfs) > 0 {
-			for i := 0; i < g.Settings.MaxAttackRevote; i++ {
-				g.doAttackVote()
-				candidates = g.getAttackVotedCandidates(g.CurrentGameStatus.AttackVoteList)
-				if len(candidates) == 1 {
-					attacked = candidates[0]
-					break
-				}
-			}
-			if attacked == nil && !g.Settings.IsEnableNoAttack {
-				rand.Shuffle(len(candidates), func(i, j int) {
-					candidates[i], candidates[j] = candidates[j], candidates[i]
-				})
-				attacked = candidates[0]
-			}
-			isGuarded := false
-			if attacked != nil {
-				if g.CurrentGameStatus.Guard.Target == *attacked && g.CurrentGameStatus.StatusMap[g.CurrentGameStatus.Guard.Agent] == model.S_ALIVE {
-					isGuarded = true
-				}
-			}
-			if !isGuarded {
-				g.CurrentGameStatus.StatusMap[*attacked] = model.S_DEAD
-				g.CurrentGameStatus.AttackedAgent = *attacked
-			}
+	}
+	if executed == nil {
+		executed = g.randomSelect(candidates)
+	}
+	if executed != nil {
+		g.CurrentGameStatus.StatusMap[*executed] = model.S_DEAD
+		g.CurrentGameStatus.ExecutedAgent = *executed
+		log.Printf("Agent %s executed", executed.Name)
+	}
+}
+
+func (g *Game) handleAttack() {
+	log.Println("Handling attack phase")
+	var attacked *model.Agent
+	werewolfs := g.getAliveWerewolves()
+	if len(werewolfs) > 0 {
+		attacked = g.performAttackVote()
+		if attacked == nil && !g.Settings.IsEnableNoAttack {
+			attacked = g.randomSelect(g.getAttackVotedCandidates(g.CurrentGameStatus.AttackVoteList))
+		}
+		g.finalizeAttack(attacked)
+	}
+}
+
+func (g *Game) performAttackVote() *model.Agent {
+	log.Println("Performing attack vote")
+	var attacked *model.Agent
+	for i := 0; i < g.Settings.MaxAttackRevote; i++ {
+		g.doAttackVote()
+		candidates := g.getAttackVotedCandidates(g.CurrentGameStatus.AttackVoteList)
+		if len(candidates) == 1 {
+			attacked = candidates[0]
+			break
+		}
+	}
+	return attacked
+}
+
+func (g *Game) finalizeAttack(attacked *model.Agent) {
+	if attacked != nil && !g.isGuarded(attacked) {
+		g.CurrentGameStatus.StatusMap[*attacked] = model.S_DEAD
+		g.CurrentGameStatus.AttackedAgent = *attacked
+		log.Printf("Agent %s attacked and killed", attacked.Name)
+	} else if attacked != nil {
+		log.Printf("Agent %s was attacked but guarded", attacked.Name)
+	}
+}
+
+func (g *Game) isGuarded(attacked *model.Agent) bool {
+	return g.CurrentGameStatus.Guard.Target == *attacked && g.CurrentGameStatus.StatusMap[g.CurrentGameStatus.Guard.Agent] == model.S_ALIVE
+}
+
+func (g *Game) doDivine() {
+	log.Println("Performing divination")
+	for _, agent := range g.Agents {
+		if agent.Role == model.R_SEER {
+			g.performDivination(agent)
+			break
 		}
 	}
 }
 
-func (g *Game) doDivine() {
-	for _, agent := range g.Agents {
-		if agent.Role == model.R_SEER {
-			name, err := g.SendRequest(agent, model.R_DIVINE)
-			if err != nil {
-				name = ""
-			}
-			target := model.Agent{}
-			for _, a := range g.Agents {
-				if a.Name == name {
-					target = *a
-					break
-				}
-			}
-			if target.Name == "" {
-				continue
-			}
-			judge := model.Judge{
-				Day:    g.CurrentGameStatus.Day,
-				Agent:  *agent,
-				Target: target,
-				Result: target.Role.Species,
-			}
-			g.CurrentGameStatus.DivineResult = judge
-			break
+func (g *Game) performDivination(agent *model.Agent) {
+	target, err := g.findAgentByRequest(agent, model.R_DIVINE)
+	if err == nil {
+		g.CurrentGameStatus.DivineResult = model.Judge{
+			Day:    g.CurrentGameStatus.Day,
+			Agent:  *agent,
+			Target: *target,
+			Result: target.Role.Species,
 		}
+		log.Printf("Divination result: Agent %s is %s", target.Name, target.Role.Species)
 	}
 }
 
 func (g *Game) doGuard() {
+	log.Println("Performing guard action")
 	for _, agent := range g.Agents {
-		if agent.Role == model.R_BODYGUARD {
-			if g.CurrentGameStatus.ExecutedAgent == *agent {
-				continue
-			}
-			name, err := g.SendRequest(agent, model.R_GUARD)
-			if err != nil {
-				name = ""
-			}
-			target := model.Agent{}
-			for _, a := range g.Agents {
-				if a.Name == name {
-					target = *a
-					break
-				}
-			}
-			if target.Name == "" || target == *agent {
-				continue
-			}
-			guard := model.Guard{
-				Day:    g.CurrentGameStatus.Day,
-				Agent:  *agent,
-				Target: target,
-			}
-			g.CurrentGameStatus.Guard = guard
+		if agent.Role == model.R_BODYGUARD && g.CurrentGameStatus.ExecutedAgent != *agent {
+			g.performGuard(agent)
 			break
 		}
 	}
 }
 
+func (g *Game) performGuard(agent *model.Agent) {
+	target, err := g.findAgentByRequest(agent, model.R_GUARD)
+	if err == nil {
+		g.CurrentGameStatus.Guard = model.Guard{
+			Day:    g.CurrentGameStatus.Day,
+			Agent:  *agent,
+			Target: *target,
+		}
+		log.Printf("Agent %s is guarding %s", agent.Name, target.Name)
+	}
+}
+
+func (g *Game) findAgentByName(name string, err error) (*model.Agent, error) {
+	if err != nil {
+		return nil, err
+	}
+	for _, agent := range g.Agents {
+		if agent.Name == name {
+			return agent, nil
+		}
+	}
+	return nil, errors.New("Agent not found")
+}
+
+func (g *Game) findAgentByRequest(agent *model.Agent, request model.Request) (*model.Agent, error) {
+	name, err := g.sendRequest(agent, request)
+	return g.findAgentByName(name, err)
+}
+
 func (g *Game) getVotedCandidates(voteList []model.Vote) []*model.Agent {
-	counter := make(map[*model.Agent]int)
-	for _, vote := range voteList {
-		if g.CurrentGameStatus.StatusMap[vote.Target] == model.S_ALIVE {
-			counter[&vote.Target]++
-		}
-	}
-	var max int
-	for _, count := range counter {
-		if count > max {
-			max = count
-		}
-	}
-	candidates := make([]*model.Agent, 0)
-	for agent, count := range counter {
-		if count == max {
-			candidates = append(candidates, agent)
-		}
-	}
-	return candidates
+	return g.getCandidates(voteList, func(vote model.Vote) bool {
+		return g.CurrentGameStatus.StatusMap[vote.Target] == model.S_ALIVE
+	})
 }
 
 func (g *Game) getAttackVotedCandidates(voteList []model.Vote) []*model.Agent {
+	return g.getCandidates(voteList, func(vote model.Vote) bool {
+		return g.CurrentGameStatus.StatusMap[vote.Target] == model.S_ALIVE && vote.Target.Role.Team != model.T_WEREWOLF
+	})
+}
+
+func (g *Game) getCandidates(voteList []model.Vote, condition func(model.Vote) bool) []*model.Agent {
 	counter := make(map[*model.Agent]int)
 	for _, vote := range voteList {
-		if g.CurrentGameStatus.StatusMap[vote.Target] == model.S_ALIVE && vote.Target.Role.Team != model.T_WEREWOLF {
+		if condition(vote) {
 			counter[&vote.Target]++
 		}
 	}
-	if !g.Settings.IsEnableNoAttack {
-		for agent, status := range g.CurrentGameStatus.StatusMap {
-			if status == model.S_ALIVE && agent.Role.Team != model.T_WEREWOLF {
-				counter[&agent]++
-			}
-		}
-	}
+	return g.getMaxCountCandidates(counter)
+}
+
+func (g *Game) getMaxCountCandidates(counter map[*model.Agent]int) []*model.Agent {
 	var max int
 	for _, count := range counter {
 		if count > max {
@@ -266,168 +278,62 @@ func (g *Game) getAttackVotedCandidates(voteList []model.Vote) []*model.Agent {
 }
 
 func (g *Game) doVote() {
-	g.CurrentGameStatus.VoteList = make([]model.Vote, 0)
-	agents := make([]*model.Agent, 0)
-	for agent, status := range g.CurrentGameStatus.StatusMap {
-		if status == model.S_ALIVE {
-			agents = append(agents, &agent)
-		}
-	}
-	votes := make([]model.Vote, 0)
-	for _, agent := range agents {
-		name, err := g.SendRequest(agent, model.R_VOTE)
-		if err != nil {
-			name = ""
-		}
-		target := model.Agent{}
-		for _, a := range agents {
-			if a.Name == name {
-				target = *a
-				break
-			}
-		}
-		if target.Name == "" {
-			for target.Name == "" || target == *agent {
-				target = *agents[rand.IntN(len(agents))]
-			}
-		}
-		vote := model.Vote{
-			Day:    g.CurrentGameStatus.Day,
-			Agent:  *agent,
-			Target: target,
-		}
-		votes = append(votes, vote)
-	}
-	g.CurrentGameStatus.VoteList = votes
+	log.Println("Collecting votes")
+	g.CurrentGameStatus.VoteList = g.collectVotes(model.R_VOTE, g.getAliveAgents())
 }
 
 func (g *Game) doAttackVote() {
-	g.CurrentGameStatus.AttackVoteList = make([]model.Vote, 0)
-	werewolfs := make([]*model.Agent, 0)
-	for agent, status := range g.CurrentGameStatus.StatusMap {
-		if status == model.S_ALIVE && agent.Role.Team == model.T_WEREWOLF {
-			werewolfs = append(werewolfs, &agent)
-		}
-	}
-	agents := make([]*model.Agent, 0)
-	for agent, status := range g.CurrentGameStatus.StatusMap {
-		if status == model.S_ALIVE {
-			agents = append(agents, &agent)
-		}
-	}
+	log.Println("Collecting attack votes")
+	g.CurrentGameStatus.AttackVoteList = g.collectVotes(model.R_ATTACK, g.getAliveWerewolves())
+}
+
+func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []model.Vote {
 	votes := make([]model.Vote, 0)
-	for _, agent := range werewolfs {
-		name, err := g.SendRequest(agent, model.R_ATTACK)
+	for _, agent := range agents {
+		target, err := g.findAgentByRequest(agent, request)
 		if err != nil {
-			name = ""
-		}
-		target := model.Agent{}
-		for _, a := range agents {
-			if a.Name == name {
-				target = *a
-				break
-			}
-		}
-		if target.Name == "" || target == *agent || g.CurrentGameStatus.StatusMap[target] != model.S_ALIVE || target.Role.Team == model.T_WEREWOLF {
 			continue
 		}
-		vote := model.Vote{
+		votes = append(votes, model.Vote{
 			Day:    g.CurrentGameStatus.Day,
 			Agent:  *agent,
-			Target: target,
-		}
-		votes = append(votes, vote)
+			Target: *target,
+		})
+		log.Printf("Agent %s voted for %s", agent.Name, target.Name)
 	}
-	g.CurrentGameStatus.AttackVoteList = votes
+	return votes
 }
 
 func (g *Game) doWhisper() {
+	log.Println("Performing whisper phase")
 	g.CurrentGameStatus.ResetRemainWhisperMap()
-	werewolfs := make([]*model.Agent, 0)
-	for agent, status := range g.CurrentGameStatus.StatusMap {
-		if status == model.S_ALIVE && agent.Role.Team == model.T_WEREWOLF {
-			werewolfs = append(werewolfs, &agent)
-		}
-	}
+	werewolfs := g.getAliveWerewolves()
 	if len(werewolfs) < 2 {
 		return
 	}
-	rand.Shuffle(len(werewolfs), func(i, j int) {
-		werewolfs[i], werewolfs[j] = werewolfs[j], werewolfs[i]
-	})
-	skipCountMap := make(map[*model.Agent]int)
-	idx := 0
-	for i := 0; i < config.MAX_WHISPER_COUNT; i++ {
-		cnt := false
-		for _, agent := range werewolfs {
-			if g.CurrentGameStatus.RemainWhisperMap[*agent] == 0 {
-				continue
-			}
-			var text string = model.T_OVER
-			text, err := g.SendRequest(agent, model.R_WHISPER)
-			if err != nil {
-				text = model.T_SKIP
-			}
-			g.CurrentGameStatus.RemainWhisperMap[*agent]--
-			if text == model.T_SKIP {
-				skipCountMap[agent]++
-				if skipCountMap[agent] >= g.Settings.MaxSkip {
-					text = model.T_OVER
-				}
-			}
-			talk := model.Talk{
-				Idx:   idx,
-				Day:   g.CurrentGameStatus.Day,
-				Turn:  i,
-				Agent: *agent,
-				Text:  text,
-			}
-			idx++
-			g.CurrentGameStatus.WhisperList = append(g.CurrentGameStatus.WhisperList, talk)
-			if text != model.T_OVER && text != model.T_SKIP {
-				skipCountMap[agent] = 0
-			}
-			if text != model.T_OVER {
-				cnt = true
-			}
-		}
-		if !cnt {
-			break
-		}
-	}
+	g.performCommunication(werewolfs, model.R_WHISPER, &g.CurrentGameStatus.WhisperList, config.MAX_WHISPER_COUNT)
 }
 
 func (g *Game) doTalk() {
+	log.Println("Performing talk phase")
 	g.CurrentGameStatus.ResetRemainTalkMap()
-	agents := make([]*model.Agent, 0)
-	for agent, status := range g.CurrentGameStatus.StatusMap {
-		if status == model.S_ALIVE {
-			agents = append(agents, &agent)
-		}
-	}
+	agents := g.getAliveAgents()
+	g.performCommunication(agents, model.R_TALK, &g.CurrentGameStatus.TalkList, config.MAX_TALK_COUNT)
+}
+
+func (g *Game) performCommunication(agents []*model.Agent, request model.Request, talkList *[]model.Talk, maxCount int) {
 	rand.Shuffle(len(agents), func(i, j int) {
 		agents[i], agents[j] = agents[j], agents[i]
 	})
 	skipCountMap := make(map[*model.Agent]int)
 	idx := 0
-	for i := 0; i < config.MAX_TALK_COUNT; i++ {
+	for i := 0; i < maxCount; i++ {
 		cnt := false
 		for _, agent := range agents {
 			if g.CurrentGameStatus.RemainTalkMap[*agent] == 0 {
 				continue
 			}
-			var text string = model.T_OVER
-			text, err := g.SendRequest(agent, model.R_TALK)
-			if err != nil {
-				text = model.T_SKIP
-			}
-			g.CurrentGameStatus.RemainTalkMap[*agent]--
-			if text == model.T_SKIP {
-				skipCountMap[agent]++
-				if skipCountMap[agent] >= g.Settings.MaxSkip {
-					text = model.T_OVER
-				}
-			}
+			text := g.getTalkWhisperText(agent, request, skipCountMap)
 			talk := model.Talk{
 				Idx:   idx,
 				Day:   g.CurrentGameStatus.Day,
@@ -436,78 +342,92 @@ func (g *Game) doTalk() {
 				Text:  text,
 			}
 			idx++
-			g.CurrentGameStatus.TalkList = append(g.CurrentGameStatus.TalkList, talk)
-			if text != model.T_OVER && text != model.T_SKIP {
-				skipCountMap[agent] = 0
-			}
+			*talkList = append(*talkList, talk)
 			if text != model.T_OVER {
 				cnt = true
 			}
+			log.Printf("Agent %s: %s", agent.Name, text)
 		}
 		if !cnt {
 			break
 		}
 	}
 }
-func (g *Game) SendRequest(agent *model.Agent, request model.Request) (string, error) {
+
+func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, skipCountMap map[*model.Agent]int) string {
+	text, err := g.sendRequest(agent, request)
+	if err != nil {
+		text = model.T_SKIP
+	}
+	g.CurrentGameStatus.RemainTalkMap[*agent]--
+	if text == model.T_SKIP {
+		skipCountMap[agent]++
+		if skipCountMap[agent] >= g.Settings.MaxSkip {
+			text = model.T_OVER
+		}
+	}
+	if text != model.T_OVER && text != model.T_SKIP {
+		skipCountMap[agent] = 0
+	}
+	return text
+}
+
+func (g *Game) sendRequest(agent *model.Agent, request model.Request) (string, error) {
+	// info := g.CurrentGameStatus.ConvertToInfo(agent, g.Settings, g.GameStatusByDay[g.CurrentGameStatus.Day-1])
+	info := model.NewInfo(agent, &g.CurrentGameStatus, g.GameStatusByDay[g.CurrentGameStatus.Day-1], g.Settings)
 	switch request {
 	case model.R_NAME, model.R_ROLE:
-		return agent.SendPacket(model.Packet{
-			Request: &request,
-		})
+		return agent.SendPacket(model.Packet{Request: &request})
 	case model.R_INITIALIZE, model.R_DAILY_INITIALIZE:
-		g.LastTalkIdxMap = make(map[*model.Agent]int)
-		g.LastWhisperIdxMap = make(map[*model.Agent]int)
-		info := g.CurrentGameStatus.ConvertToInfo(agent, g.Settings)
-		return agent.SendPacket(model.Packet{
-			Request:  &request,
-			Info:     &info,
-			Settings: &g.Settings,
-		})
+		g.resetLastIdxMaps()
+		return agent.SendPacket(model.Packet{Request: &request, Info: &info, Settings: &g.Settings})
 	case model.R_VOTE, model.R_DIVINE, model.R_GUARD, model.R_ATTACK:
-		info := g.CurrentGameStatus.ConvertToInfo(agent, g.Settings)
-		return agent.SendPacket(model.Packet{
-			Request: &request,
-			Info:    &info,
-		})
+		return agent.SendPacket(model.Packet{Request: &request, Info: &info})
 	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER:
-		info := g.CurrentGameStatus.ConvertToInfo(agent, g.Settings)
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
-		return agent.SendPacket(model.Packet{
-			Request:        &request,
-			TalkHistory:    talks,
-			WhisperHistory: whispers,
-		})
+		return agent.SendPacket(model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers})
 	case model.R_FINISH:
-		info := g.CurrentGameStatus.ConvertToInfo(agent, g.Settings)
-		roleMap := make(map[model.Agent]model.Role)
-		for _, a := range g.Agents {
-			roleMap[*a] = a.Role
-		}
-		info.RoleMap = roleMap
-		return agent.SendPacket(model.Packet{
-			Request: &request,
-			Info:    &info,
-		})
+		info.RoleMap = g.getRoleMap()
+		return agent.SendPacket(model.Packet{Request: &request, Info: &info})
 	}
-	return "", nil
+	return "", errors.New("Invalid request")
+}
+
+func (g *Game) resetLastIdxMaps() {
+	g.LastTalkIdxMap = make(map[*model.Agent]int)
+	g.LastWhisperIdxMap = make(map[*model.Agent]int)
+}
+
+func (g *Game) getRoleMap() map[model.Agent]model.Role {
+	roleMap := make(map[model.Agent]model.Role)
+	for _, a := range g.Agents {
+		roleMap[*a] = a.Role
+	}
+	return roleMap
 }
 
 func (g *Game) minimize(agent *model.Agent, talks []model.Talk, whispers []model.Talk) ([]model.Talk, []model.Talk) {
-	lastTalkIdx := 0
-	lastWhisperIdx := 0
-	if idx, ok := g.LastTalkIdxMap[agent]; ok {
-		lastTalkIdx = idx
-	}
-	if idx, ok := g.LastWhisperIdxMap[agent]; ok {
-		lastWhisperIdx = idx
-	}
+	lastTalkIdx := g.LastTalkIdxMap[agent]
+	lastWhisperIdx := g.LastWhisperIdxMap[agent]
 	g.LastTalkIdxMap[agent] = len(talks)
 	g.LastWhisperIdxMap[agent] = len(whispers)
 	return talks[lastTalkIdx:], whispers[lastWhisperIdx:]
 }
 
 func (g *Game) calcWinTeam() model.Team {
+	villager, werewolf := g.countTeams()
+	if werewolf == 0 {
+		log.Println("Villagers win")
+		return model.T_VILLAGER
+	}
+	if villager <= werewolf {
+		log.Println("Werewolves win")
+		return model.T_WEREWOLF
+	}
+	return model.T_NULL
+}
+
+func (g *Game) countTeams() (int, int) {
 	var villager, werewolf int
 	for agent, status := range g.CurrentGameStatus.StatusMap {
 		if status == model.S_ALIVE {
@@ -518,11 +438,40 @@ func (g *Game) calcWinTeam() model.Team {
 			}
 		}
 	}
-	if werewolf == 0 {
-		return model.T_VILLAGER
+	log.Printf("Team counts - Villagers: %d, Werewolves: %d", villager, werewolf)
+	return villager, werewolf
+}
+
+func (g *Game) getAliveAgents() []*model.Agent {
+	return g.filterAgents(func(agent *model.Agent) bool {
+		return g.CurrentGameStatus.StatusMap[*agent] == model.S_ALIVE
+	})
+}
+
+func (g *Game) getAliveWerewolves() []*model.Agent {
+	return g.filterAgents(func(agent *model.Agent) bool {
+		return g.CurrentGameStatus.StatusMap[*agent] == model.S_ALIVE && agent.Role.Team == model.T_WEREWOLF
+	})
+}
+
+func (g *Game) filterAgents(condition func(*model.Agent) bool) []*model.Agent {
+	agents := make([]*model.Agent, 0)
+	for agent := range g.CurrentGameStatus.StatusMap {
+		if condition(&agent) {
+			agents = append(agents, &agent)
+		}
 	}
-	if villager <= werewolf {
-		return model.T_WEREWOLF
+	return agents
+}
+
+func (g *Game) randomSelect(agents []*model.Agent) *model.Agent {
+	rand.Shuffle(len(agents), func(i, j int) {
+		agents[i], agents[j] = agents[j], agents[i]
+	})
+	if len(agents) > 0 {
+		selected := agents[0]
+		log.Printf("Randomly selected agent: %s", selected.Name)
+		return selected
 	}
-	return model.T_NULL
+	return nil
 }

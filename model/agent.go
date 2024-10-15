@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -46,6 +47,9 @@ func (a *Agent) SendPacket(packet Packet) (string, error) {
 		_, res, err := a.Connection.ReadMessage()
 		if err != nil {
 			return "", err
+		}
+		if string(res) == "" {
+			return "", errors.New("Empty response")
 		}
 		return string(res), nil
 	}

@@ -9,15 +9,7 @@ type Talk struct {
 }
 
 const (
-	T_OVER     = "Over"
+	T_OVER       = "Over"
 	T_SKIP       = "Skip"
 	T_FORCE_SKIP = "ForceSkip"
 )
-
-func (t *Talk) IsOver() bool {
-	return t.Text == T_OVER
-}
-
-func (t *Talk) IsSkip() bool {
-	return t.Text == T_SKIP
-}
