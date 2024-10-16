@@ -27,7 +27,7 @@ func NewServer() *Server {
 }
 
 func (s *Server) Run() {
-	http.HandleFunc("/ws", s.handleConnections)
+	http.HandleFunc("/", s.handleConnections)
 	log.Println("WebSocket server started on :" + strconv.Itoa(config.WEBSOCKET_PORT))
 	err := http.ListenAndServe(":"+strconv.Itoa(config.WEBSOCKET_PORT), nil)
 	if err != nil {

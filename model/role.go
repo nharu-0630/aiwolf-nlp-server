@@ -52,5 +52,5 @@ func Roles(num int) map[Role]int {
 			R_MEDIUM:    0,
 		}
 	}
-	return nil
+	return map[Role]int{}
 }
