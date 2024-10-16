@@ -52,29 +52,30 @@ func (i Info) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// func (g GameStatus) ConvertToInfo(agent *Agent, settings Settings, lastGameStatus *GameStatus) Info {
 func NewInfo(agent *Agent, gameStatus *GameStatus, lastGameStatus *GameStatus, settings Settings) Info {
 	info := Info{
 		Day:   gameStatus.Day,
 		Agent: agent,
 	}
-	if lastGameStatus.MediumResult != (Judge{}) && agent.Role == R_MEDIUM {
-		info.MediumResult = &lastGameStatus.MediumResult
-	}
-	if lastGameStatus.DivineResult != (Judge{}) && agent.Role == R_SEER {
-		info.DivineResult = &lastGameStatus.DivineResult
-	}
-	if lastGameStatus.ExecutedAgent != (Agent{}) {
-		info.ExecutedAgent = &lastGameStatus.ExecutedAgent
-	}
-	if lastGameStatus.AttackedAgent != (Agent{}) {
-		info.AttackedAgent = &lastGameStatus.AttackedAgent
-	}
-	if settings.IsVoteVisible {
-		info.VoteList = lastGameStatus.VoteList
-	}
-	if settings.IsVoteVisible && agent.Role == R_WEREWOLF {
-		info.AttackVoteList = lastGameStatus.AttackVoteList
+	if lastGameStatus != nil {
+		if lastGameStatus.MediumResult != nil && agent.Role == R_MEDIUM {
+			info.MediumResult = lastGameStatus.MediumResult
+		}
+		if lastGameStatus.DivineResult != nil && agent.Role == R_SEER {
+			info.DivineResult = lastGameStatus.DivineResult
+		}
+		if lastGameStatus.ExecutedAgent != nil {
+			info.ExecutedAgent = lastGameStatus.ExecutedAgent
+		}
+		if lastGameStatus.AttackedAgent != nil {
+			info.AttackedAgent = lastGameStatus.AttackedAgent
+		}
+		if settings.IsVoteVisible {
+			info.VoteList = lastGameStatus.VoteList
+		}
+		if settings.IsVoteVisible && agent.Role == R_WEREWOLF {
+			info.AttackVoteList = lastGameStatus.AttackVoteList
+		}
 	}
 	info.TalkList = gameStatus.TalkList
 	if agent.Role == R_WEREWOLF {

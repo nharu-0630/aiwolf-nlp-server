@@ -22,7 +22,7 @@ type Team string
 const (
 	T_VILLAGER Team = "VILLAGER" // 市民陣営
 	T_WEREWOLF Team = "WEREWOLF" // 人狼陣営
-	T_NULL     Team = "NULL"     // なし
+	T_NONE     Team = "NONE"     // なし
 )
 
 type Species string

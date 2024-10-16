@@ -11,8 +11,8 @@ import (
 )
 
 type Server struct {
-	upgrader websocket.Upgrader
-	clients  []*websocket.Conn
+	upgrader    websocket.Upgrader
+	connections []*websocket.Conn
 }
 
 func NewServer() *Server {
@@ -22,7 +22,7 @@ func NewServer() *Server {
 				return true
 			},
 		},
-		clients: make([]*websocket.Conn, 0),
+		connections: make([]*websocket.Conn, 0),
 	}
 }
 
@@ -42,16 +42,29 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.clients = append(s.clients, conn)
-	log.Printf("New client connected. Total clients: %d", len(s.clients))
+	s.connections = append(s.connections, conn)
+	log.Printf("New client connected. Total clients: %d", len(s.connections))
 
-	if len(s.clients) == config.GAME_AGENT_COUNT {
+	if len(s.connections) == config.GAME_AGENT_COUNT {
 		log.Println(strconv.Itoa(config.GAME_AGENT_COUNT) + " clients connected, starting game...")
-		gameSetting := model.Settings{}
-		game := NewGame(gameSetting, s.clients)
+		gameSetting := model.Settings{
+			MaxTalk:          config.MAX_TALK_COUNT_PER_AGENT,
+			MaxTalkTurn:      config.MAX_TALK_COUNT,
+			MaxWhisper:       config.MAX_WHISPER_COUNT_PER_AGENT,
+			MaxWhisperTurn:   config.MAX_WHISPER_COUNT,
+			MaxSkip:          config.MAX_SKIP_COUNT,
+			IsEnableNoAttack: config.IS_ENABLE_NO_ATTACK,
+			IsVoteVisible:    config.IS_VOTE_VISIBLE,
+			IsTalkOnFirstDay: config.IS_TALK_ON_FIRST_DAY,
+			ResponseTimeout:  config.RESPONSE_TIMEOUT,
+			ActionTimeout:    config.ACTION_TIMEOUT,
+			MaxRevote:        config.MAX_REVOTE_COUNT,
+			MaxAttackRevote:  config.MAX_ATTACK_REVOTE_COUNT,
+		}
+		game := NewGame(gameSetting, s.connections)
 		game.Start()
 
-		log.Printf("Game created with ID: %s", game.GameID)
-		s.clients = make([]*websocket.Conn, 0)
+		log.Printf("Game created with ID: %s", game.ID)
+		s.connections = make([]*websocket.Conn, 0)
 	}
 }

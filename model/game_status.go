@@ -1,14 +1,12 @@
 package model
 
-import "github.com/nharu-0630/aiwolf-nlp-server/config"
-
 type GameStatus struct {
 	Day              int              // 日付
-	MediumResult     Judge            // 霊媒師の結果
-	DivineResult     Judge            // 占い師の結果
-	ExecutedAgent    Agent            // 処刑されたエージェント
-	AttackedAgent    Agent            // 襲撃されたエージェント
-	Guard            Guard            // 護衛されたエージェント
+	MediumResult     *Judge           // 霊媒師の結果
+	DivineResult     *Judge           // 占い師の結果
+	ExecutedAgent    *Agent           // 処刑されたエージェント
+	AttackedAgent    *Agent           // 襲撃されたエージェント
+	Guard            *Guard           // 護衛されたエージェント
 	VoteList         []Vote           // 投票リスト
 	AttackVoteList   []Vote           // 襲撃投票リスト
 	TalkList         []Talk           // 会話リスト
@@ -21,11 +19,11 @@ type GameStatus struct {
 func NewInitializeGameStatus(agents []*Agent) GameStatus {
 	status := GameStatus{
 		Day:              0,
-		MediumResult:     Judge{},
-		DivineResult:     Judge{},
-		ExecutedAgent:    Agent{},
-		AttackedAgent:    Agent{},
-		Guard:            Guard{},
+		MediumResult:     nil,
+		DivineResult:     nil,
+		ExecutedAgent:    nil,
+		AttackedAgent:    nil,
+		Guard:            nil,
 		VoteList:         []Vote{},
 		AttackVoteList:   []Vote{},
 		TalkList:         []Talk{},
@@ -43,11 +41,11 @@ func NewInitializeGameStatus(agents []*Agent) GameStatus {
 func (g GameStatus) NextDay() GameStatus {
 	status := GameStatus{
 		Day:              g.Day + 1,
-		MediumResult:     Judge{},
-		DivineResult:     Judge{},
-		ExecutedAgent:    Agent{},
-		AttackedAgent:    Agent{},
-		Guard:            Guard{},
+		MediumResult:     nil,
+		DivineResult:     nil,
+		ExecutedAgent:    nil,
+		AttackedAgent:    nil,
+		Guard:            nil,
 		VoteList:         []Vote{},
 		AttackVoteList:   []Vote{},
 		TalkList:         []Talk{},
@@ -62,21 +60,21 @@ func (g GameStatus) NextDay() GameStatus {
 	return status
 }
 
-func (g GameStatus) ResetRemainTalkMap() {
+func (g GameStatus) ResetRemainTalkMap(count int) {
 	for agent, status := range g.StatusMap {
 		if status == S_ALIVE {
-			g.RemainTalkMap[agent] = config.MAX_TALK_COUNT_PER_AGENT
+			g.RemainTalkMap[agent] = count
 		} else {
 			g.RemainTalkMap[agent] = 0
 		}
 	}
 }
 
-func (g GameStatus) ResetRemainWhisperMap() {
+func (g GameStatus) ResetRemainWhisperMap(count int) {
 	for agent, status := range g.StatusMap {
 		if status == S_ALIVE {
 			if agent.Role == R_WEREWOLF {
-				g.RemainWhisperMap[agent] = config.MAX_WHISPER_COUNT_PER_AGENT
+				g.RemainWhisperMap[agent] = count
 			} else {
 				g.RemainWhisperMap[agent] = 0
 			}
