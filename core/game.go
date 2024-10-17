@@ -109,7 +109,7 @@ func (g *Game) doExecution() {
 		g.GameStatuses[g.CurrentDay].ExecutedAgent = executed
 		slog.Info("追放結果を設定しました", "id", g.ID, "agent", executed.Name)
 	} else {
-		slog.Info("追放対象がいないため、追放結果を設定しません", "id", g.ID)
+		slog.Warn("追放対象がいないため、追放結果を設定しません", "id", g.ID)
 	}
 	slog.Info("追放フェーズを終了します", "id", g.ID, "day", g.CurrentDay)
 }
@@ -131,7 +131,7 @@ func (g *Game) doAttack() {
 		} else if attacked != nil {
 			slog.Info("護衛されたため、襲撃結果を設定しません", "id", g.ID, "agent", attacked.Name)
 		} else {
-			slog.Info("襲撃対象がいないため、襲撃結果を設定しません", "id", g.ID)
+			slog.Warn("襲撃対象がいないため、襲撃結果を設定しません", "id", g.ID)
 		}
 	}
 	slog.Info("襲撃フェーズを終了します", "id", g.ID, "day", g.CurrentDay)
@@ -342,14 +342,14 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 	text, err := g.sendRequest(agent, request)
 	if err != nil {
 		text = model.T_SKIP
-		slog.Info("リクエストの送信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
+		slog.Warn("リクエストの送信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
 	}
 	g.GameStatuses[g.CurrentDay].RemainTalkMap[*agent]--
 	if text == model.T_SKIP {
 		skipCountMap[agent]++
 		if skipCountMap[agent] >= g.Settings.MaxSkip {
 			text = model.T_OVER
-			slog.Info("スキップ回数が上限に達したため、発言をオーバーに置換しました", "id", g.ID, "agent", agent.Name)
+			slog.Warn("スキップ回数が上限に達したため、発言をオーバーに置換しました", "id", g.ID, "agent", agent.Name)
 		} else {
 			slog.Info("発言をスキップしました", "id", g.ID, "agent", agent.Name)
 		}

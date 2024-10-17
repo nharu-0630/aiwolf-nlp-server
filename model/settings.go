@@ -23,12 +23,12 @@ type Settings struct {
 	MaxAttackRevote  int          `json:"maxAttackRevote"`  // 最大襲撃再投票回数
 }
 
-func NewSettings() (*Settings, error) {
+func NewSettings() (Settings, error) {
 	roleNumMap := Roles(config.AGENT_COUNT_PER_GAME)
 	if roleNumMap == nil {
-		return nil, errors.New("対応する役職の人数がありません")
+		return Settings{}, errors.New("対応する役職の人数がありません")
 	}
-	settings := &Settings{
+	settings := Settings{
 		RoleNumMap:       *roleNumMap,
 		MaxTalk:          config.MAX_TALK_COUNT_PER_AGENT,
 		MaxTalkTurn:      config.MAX_TALK_COUNT_PER_DAY,

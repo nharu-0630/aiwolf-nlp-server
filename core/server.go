@@ -85,7 +85,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.mu.Lock()
-		game := NewGame(*gameSetting, s.connections)
+		game := NewGame(gameSetting, s.connections)
 		s.games[game] = conn
 		s.mu.Unlock()
 		go func() {
