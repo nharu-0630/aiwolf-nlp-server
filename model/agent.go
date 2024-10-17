@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,6 +30,9 @@ func NewAgent(idx int, role Role, conn *websocket.Conn) (*Agent, error) {
 		return nil, err
 	}
 	agent.Name = name
+	log.Printf("エージェントを作成しました: %s", agent.Name)
+	log.Printf("エージェントの役職: %s", agent.Role)
+	log.Printf("エージェントの接続先: %s", agent.Connection.RemoteAddr())
 	return agent, nil
 }
 

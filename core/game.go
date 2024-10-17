@@ -29,7 +29,7 @@ func NewGame(settings model.Settings, conns []*websocket.Conn) *Game {
 		log.Panic("接続数に対応する役職がありません")
 	}
 	settings.RoleNumMap = model.Roles(len(conns))
-	agents := createAgents(conns, roles)
+	agents := utils.CreateAgents(conns, roles)
 	log.Printf("新規ゲームを作成しました: %s", id)
 	gameStatus := model.NewInitializeGameStatus(agents)
 	gameStatuses := make(map[int]*model.GameStatus)
@@ -47,32 +47,6 @@ func NewGame(settings model.Settings, conns []*websocket.Conn) *Game {
 	}
 }
 
-func createAgents(conns []*websocket.Conn, roles map[model.Role]int) []*model.Agent {
-	agents := make([]*model.Agent, 0)
-	for i, conn := range conns {
-		role := assignRole(roles)
-		agent, err := model.NewAgent(i, role, conn)
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Printf("エージェントを作成しました: %s", agent.Name)
-		log.Printf("エージェントの役職: %s", agent.Role)
-		log.Printf("エージェントの接続先: %s", agent.Connection.RemoteAddr())
-		agents = append(agents, agent)
-	}
-	return agents
-}
-
-func assignRole(roles map[model.Role]int) model.Role {
-	for r, n := range roles {
-		if n > 0 {
-			roles[r]--
-			return r
-		}
-	}
-	return model.R_VILLAGER
-}
-
 func (g *Game) sendRequestToEveryone(request model.Request) {
 	for _, agent := range g.Agents {
 		g.sendRequest(agent, request)
@@ -82,18 +56,19 @@ func (g *Game) sendRequestToEveryone(request model.Request) {
 func (g *Game) Start() {
 	log.Println("ゲームを開始します")
 	for utils.CalcWinSideTeam(g.GameStatuses[g.CurrentDay].StatusMap) == model.T_NONE {
-		g.doDay()
-		g.doNight()
+		g.progressDay()
+		g.progressNight()
 		gameStatus := g.GameStatuses[g.CurrentDay].NextDay()
 		g.GameStatuses[g.CurrentDay+1] = &gameStatus
 		g.CurrentDay++
+		log.Printf("日付が進みました: %d日目", g.CurrentDay)
 	}
 	g.sendRequestToEveryone(model.R_FINISH)
 	log.Printf("ゲームが終了しました: %s", utils.CalcWinSideTeam(g.GameStatuses[g.CurrentDay].StatusMap))
 }
 
-func (g *Game) doDay() {
-	log.Printf("昼のターンを開始します: %d日目", g.CurrentDay)
+func (g *Game) progressDay() {
+	log.Printf("昼を開始します: %d日目", g.CurrentDay)
 	g.sendRequestToEveryone(model.R_DAILY_INITIALIZE)
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
@@ -101,29 +76,29 @@ func (g *Game) doDay() {
 	g.doTalk()
 }
 
-func (g *Game) doNight() {
-	log.Printf("夜のターンを開始します: %d日目", g.CurrentDay)
+func (g *Game) progressNight() {
+	log.Printf("夜を開始します: %d日目", g.CurrentDay)
 	g.sendRequestToEveryone(model.R_DAILY_FINISH)
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
 	}
 	if g.CurrentDay != 0 {
-		g.handleExecution()
+		g.doExecution()
 	}
 	g.doDivine()
 	if g.CurrentDay != 0 {
 		g.doWhisper()
 		g.doGuard()
-		g.handleAttack()
+		g.doAttack()
 	}
 }
 
-func (g *Game) handleExecution() {
+func (g *Game) doExecution() {
 	log.Printf("追放フェーズを開始します: %d日目", g.CurrentDay)
 	var executed *model.Agent
 	candidates := make([]*model.Agent, 0)
 	for i := 0; i < g.Settings.MaxRevote; i++ {
-		g.doVote()
+		g.executeVote()
 		candidates = g.getVotedCandidates(g.GameStatuses[g.CurrentDay].VoteList)
 		if len(candidates) == 1 {
 			executed = candidates[0]
@@ -140,24 +115,33 @@ func (g *Game) handleExecution() {
 	}
 }
 
-func (g *Game) handleAttack() {
+func (g *Game) doAttack() {
 	log.Printf("襲撃フェーズを開始します: %d日目", g.CurrentDay)
 	var attacked *model.Agent
 	werewolfs := g.getAliveWerewolves()
 	if len(werewolfs) > 0 {
-		attacked = g.performAttackVote()
+		attacked = g.conductAttackVote()
 		if attacked == nil && !g.Settings.IsEnableNoAttack {
 			attacked = utils.SelectRandomAgent(g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVoteList))
 		}
-		g.finalizeAttack(attacked)
+
+		if attacked != nil && !g.isGuarded(attacked) {
+			g.GameStatuses[g.CurrentDay].StatusMap[*attacked] = model.S_DEAD
+			g.GameStatuses[g.CurrentDay].AttackedAgent = attacked
+			log.Printf("襲撃されたエージェント: %s", attacked.Name)
+		} else if attacked != nil {
+			log.Printf("襲撃されたエージェント: %s (Guarded)", attacked.Name)
+		} else {
+			log.Println("襲撃されたエージェント: なし")
+		}
 	}
 }
 
-func (g *Game) performAttackVote() *model.Agent {
+func (g *Game) conductAttackVote() *model.Agent {
 	log.Printf("襲撃投票を開始します: %d日目", g.CurrentDay)
 	var attacked *model.Agent
 	for i := 0; i < g.Settings.MaxAttackRevote; i++ {
-		g.doAttackVote()
+		g.executeAttackVote()
 		candidates := g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVoteList)
 		if len(candidates) == 1 {
 			attacked = candidates[0]
@@ -165,18 +149,6 @@ func (g *Game) performAttackVote() *model.Agent {
 		}
 	}
 	return attacked
-}
-
-func (g *Game) finalizeAttack(attacked *model.Agent) {
-	if attacked != nil && !g.isGuarded(attacked) {
-		g.GameStatuses[g.CurrentDay].StatusMap[*attacked] = model.S_DEAD
-		g.GameStatuses[g.CurrentDay].AttackedAgent = attacked
-		log.Printf("襲撃されたエージェント: %s", attacked.Name)
-	} else if attacked != nil {
-		log.Printf("襲撃されたエージェント: %s (Guarded)", attacked.Name)
-	} else {
-		log.Println("襲撃されたエージェント: なし")
-	}
 }
 
 func (g *Game) isGuarded(attacked *model.Agent) bool {
@@ -187,15 +159,15 @@ func (g *Game) doDivine() {
 	log.Printf("占いフェーズを開始します: %d日目", g.CurrentDay)
 	for _, agent := range g.Agents {
 		if agent.Role == model.R_SEER {
-			g.performDivination(agent)
+			g.conductDivination(agent)
 			break
 		}
 	}
 }
 
-func (g *Game) performDivination(agent *model.Agent) {
-	log.Printf("占いアクションを実行します: %s", agent.Name)
-	target, err := g.findAgentByRequest(agent, model.R_DIVINE)
+func (g *Game) conductDivination(agent *model.Agent) {
+	log.Printf("占いアクションを開始します: %s", agent.Name)
+	target, err := g.findTargetByRequest(agent, model.R_DIVINE)
 	if err == nil {
 		g.GameStatuses[g.CurrentDay].DivineResult = &model.Judge{
 			Day:    g.GameStatuses[g.CurrentDay].Day,
@@ -212,15 +184,15 @@ func (g *Game) doGuard() {
 	log.Printf("護衛フェーズを開始します: %d日目", g.CurrentDay)
 	for _, agent := range g.Agents {
 		if agent.Role == model.R_BODYGUARD && g.GameStatuses[g.CurrentDay].ExecutedAgent != agent {
-			g.performGuard(agent)
+			g.conductGuard(agent)
 			break
 		}
 	}
 }
 
-func (g *Game) performGuard(agent *model.Agent) {
+func (g *Game) conductGuard(agent *model.Agent) {
 	log.Printf("護衛アクションを実行します: %s", agent.Name)
-	target, err := g.findAgentByRequest(agent, model.R_GUARD)
+	target, err := g.findTargetByRequest(agent, model.R_GUARD)
 	if err == nil {
 		g.GameStatuses[g.CurrentDay].Guard = &model.Guard{
 			Day:    g.GameStatuses[g.CurrentDay].Day,
@@ -231,21 +203,16 @@ func (g *Game) performGuard(agent *model.Agent) {
 	}
 }
 
-func (g *Game) findAgentByName(name string, err error) (*model.Agent, error) {
+func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*model.Agent, error) {
+	name, err := g.sendRequest(agent, request)
 	if err != nil {
 		return nil, err
 	}
-	for _, agent := range g.Agents {
-		if agent.Name == name {
-			return agent, nil
-		}
+	target := utils.FindAgentByName(g.Agents, name)
+	if target == nil {
+		return nil, errors.New("対象エージェントが見つかりません")
 	}
-	return nil, errors.New("一致するエージェントが見つかりません")
-}
-
-func (g *Game) findAgentByRequest(agent *model.Agent, request model.Request) (*model.Agent, error) {
-	name, err := g.sendRequest(agent, request)
-	return g.findAgentByName(name, err)
+	return target, nil
 }
 
 func (g *Game) getVotedCandidates(voteList []model.Vote) []*model.Agent {
@@ -286,20 +253,20 @@ func (g *Game) getMaxCountCandidates(counter map[*model.Agent]int) []*model.Agen
 	return candidates
 }
 
-func (g *Game) doVote() {
-	log.Printf("投票フェーズを開始します: %d日目", g.CurrentDay)
+func (g *Game) executeVote() {
+	log.Printf("投票アクションを開始します: %d日目", g.CurrentDay)
 	g.GameStatuses[g.CurrentDay].VoteList = g.collectVotes(model.R_VOTE, g.getAliveAgents())
 }
 
-func (g *Game) doAttackVote() {
-	log.Printf("襲撃投票フェーズを開始します: %d日目", g.CurrentDay)
+func (g *Game) executeAttackVote() {
+	log.Printf("襲撃投票アクションを開始します: %d日目", g.CurrentDay)
 	g.GameStatuses[g.CurrentDay].AttackVoteList = g.collectVotes(model.R_ATTACK, g.getAliveWerewolves())
 }
 
 func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []model.Vote {
 	votes := make([]model.Vote, 0)
 	for _, agent := range agents {
-		target, err := g.findAgentByRequest(agent, request)
+		target, err := g.findTargetByRequest(agent, request)
 		if err != nil {
 			continue
 		}
@@ -321,17 +288,17 @@ func (g *Game) doWhisper() {
 	if len(werewolfs) < 2 {
 		return
 	}
-	g.performCommunication(werewolfs, model.R_WHISPER, &g.GameStatuses[g.CurrentDay].WhisperList, g.Settings.MaxWhisperTurn)
+	g.conductCommunication(werewolfs, model.R_WHISPER, &g.GameStatuses[g.CurrentDay].WhisperList, g.Settings.MaxWhisperTurn)
 }
 
 func (g *Game) doTalk() {
 	log.Printf("発言フェーズを開始します: %d日目", g.CurrentDay)
 	g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalk)
 	agents := g.getAliveAgents()
-	g.performCommunication(agents, model.R_TALK, &g.GameStatuses[g.CurrentDay].TalkList, g.Settings.MaxTalkTurn)
+	g.conductCommunication(agents, model.R_TALK, &g.GameStatuses[g.CurrentDay].TalkList, g.Settings.MaxTalkTurn)
 }
 
-func (g *Game) performCommunication(agents []*model.Agent, request model.Request, talkList *[]model.Talk, turnCount int) {
+func (g *Game) conductCommunication(agents []*model.Agent, request model.Request, talkList *[]model.Talk, turnCount int) {
 	rand.Shuffle(len(agents), func(i, j int) {
 		agents[i], agents[j] = agents[j], agents[i]
 	})
