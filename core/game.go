@@ -370,9 +370,13 @@ func (g *Game) conductCommunication(agents []*model.Agent, request model.Request
 
 func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, skipCountMap map[*model.Agent]int) string {
 	text, err := g.RequestToAgent(agent, request)
-	if err != nil {
+	if text == model.T_FORCE_SKIP {
 		text = model.T_SKIP
-		slog.Warn("リクエストの送信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
+		slog.Warn("クライアントから強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
+	}
+	if err != nil {
+		text = model.T_FORCE_SKIP
+		slog.Warn("リクエストの送受信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
 	}
 	g.GameStatuses[g.CurrentDay].RemainTalkMap[*agent]--
 	if text == model.T_SKIP {
@@ -383,8 +387,11 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 		} else {
 			slog.Info("発言をスキップしました", "id", g.ID, "agent", agent.Name)
 		}
+	} else if text == model.T_FORCE_SKIP {
+		text = model.T_SKIP
+		slog.Warn("強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
 	}
-	if text != model.T_OVER && text != model.T_SKIP {
+	if text != model.T_OVER && text != model.T_SKIP && text != model.T_FORCE_SKIP {
 		skipCountMap[agent] = 0
 		slog.Info("発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました", "id", g.ID, "agent", agent.Name)
 	}

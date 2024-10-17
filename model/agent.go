@@ -80,7 +80,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		case res := <-responseChan:
 			if string(res) == a.Name {
 				slog.Info("NAMEリクエストのレスポンスを受信しました", "agent", a.Name, "response", string(res))
-				return "", nil
+				return "", errors.New("リクエストのレスポンス受信がタイムアウトしました")
 			} else {
 				slog.Error("不正なNAMEリクエストのレスポンスを受信しました", "agent", a.Name, "response", string(res))
 				return "", errors.New("不正なNAMEリクエストのレスポンスを受信しました")
