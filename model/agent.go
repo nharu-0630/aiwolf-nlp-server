@@ -18,23 +18,13 @@ type Agent struct {
 	Connection *websocket.Conn `json:"-"`    // 接続
 }
 
-func NewAgent(idx int, role Role, conn *websocket.Conn) (*Agent, error) {
+func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
 	agent := &Agent{
 		Idx:        idx,
+		Name:       conn.Name,
 		Role:       role,
-		Connection: conn,
+		Connection: conn.Conn,
 	}
-	name, err := agent.SendPacket(
-		Packet{
-			Request: &R_NAME,
-		},
-		3*time.Minute,
-		15*time.Minute,
-	)
-	if err != nil {
-		return nil, err
-	}
-	agent.Name = name
 	slog.Info("エージェントを作成しました", "agent", agent.Name, "role", agent.Role, "connection", agent.Connection.RemoteAddr())
 	return agent, nil
 }

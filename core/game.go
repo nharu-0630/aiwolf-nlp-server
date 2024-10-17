@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/dgryski/trifles/uuid"
-	"github.com/gorilla/websocket"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 	"github.com/nharu-0630/aiwolf-nlp-server/utils"
 )
@@ -22,7 +21,7 @@ type Game struct {
 	LastWhisperIdxMap map[*model.Agent]int      // 最後に送信した囁きのインデックス
 }
 
-func NewGame(settings model.Settings, conns []*websocket.Conn) *Game {
+func NewGame(settings model.Settings, conns []model.Connection) *Game {
 	slog.Info("新規ゲームを作成します")
 	id := uuid.UUIDv4()
 	agents := utils.CreateAgents(conns, settings.RoleNumMap)

@@ -3,7 +3,6 @@ package utils
 import (
 	"log"
 
-	"github.com/gorilla/websocket"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
@@ -40,7 +39,7 @@ func GetRoleMap(agents []*model.Agent) map[model.Agent]model.Role {
 	return roleMap
 }
 
-func CreateAgents(conns []*websocket.Conn, roles map[model.Role]int) []*model.Agent {
+func CreateAgents(conns []model.Connection, roles map[model.Role]int) []*model.Agent {
 	agents := make([]*model.Agent, 0)
 	for i, conn := range conns {
 		role := assignRole(roles)
