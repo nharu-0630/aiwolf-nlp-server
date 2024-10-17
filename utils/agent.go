@@ -7,6 +7,9 @@ import (
 )
 
 func SelectRandomAgent(agents []*model.Agent) *model.Agent {
+	if len(agents) == 0 {
+		return nil
+	}
 	return agents[rand.Intn(len(agents))]
 }
 

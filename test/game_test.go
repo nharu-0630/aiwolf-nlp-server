@@ -53,12 +53,12 @@ func TestGame(t *testing.T) {
 		server.Run()
 	}()
 	// Wait for the server to start
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: "localhost:" + strconv.Itoa(config.WEBSOCKET_PORT), Path: "/"}
+	u := url.URL{Scheme: "ws", Host: config.WEBSOCKET_HOST + ":" + strconv.Itoa(config.WEBSOCKET_PORT), Path: "/"}
 	log.Printf("connecting to %s", u.String())
 
 	var wg sync.WaitGroup

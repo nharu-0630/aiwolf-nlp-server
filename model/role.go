@@ -40,10 +40,10 @@ func (r Role) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.String())
 }
 
-func Roles(num int) map[Role]int {
+func Roles(num int) *map[Role]int {
 	switch num {
 	case 5:
-		return map[Role]int{
+		return &map[Role]int{
 			R_WEREWOLF:  1,
 			R_POSSESSED: 0,
 			R_SEER:      1,
@@ -52,5 +52,5 @@ func Roles(num int) map[Role]int {
 			R_MEDIUM:    0,
 		}
 	}
-	return map[Role]int{}
+	return nil
 }

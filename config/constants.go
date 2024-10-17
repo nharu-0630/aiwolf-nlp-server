@@ -1,6 +1,8 @@
 package config
 
 const (
+	WEBSOCKET_HOST = "127.0.0.1" // ネットワーク受信接続の警告を回避するため
+	// WEBSOCKET_HOSTNAME = "0.0.0.0" // 外部接続を許可する場合
 	WEBSOCKET_PORT   = 8080
 	GAME_AGENT_COUNT = 5
 
