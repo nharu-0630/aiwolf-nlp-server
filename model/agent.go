@@ -61,9 +61,9 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 				slog.Error("接続が閉じられました", "error", err)
 				return "", err
 			}
-			slog.Warn("レスポンスの受信に失敗しました。NAMEリクエストを送信します", "agent", a.Name, "error", err)
+			slog.Warn("レスポンスの受信に失敗したため、NAMEリクエストを送信します", "agent", a.Name, "error", err)
 		case <-time.After(actionTimeout):
-			slog.Warn("レスポンスの受信がタイムアウトしました。NAMEリクエストを送信します", "agent", a.Name)
+			slog.Warn("レスポンスの受信がタイムアウトしたため、NAMEリクエストを送信します", "agent", a.Name)
 		}
 		nameReq, err := json.Marshal(Packet{Request: &R_NAME})
 		if err != nil {
