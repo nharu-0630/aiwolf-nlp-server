@@ -16,7 +16,7 @@ const (
 	VOTE_VISIBILITY             = false                           // 投票の結果を公開するか
 	TALK_ON_FIRST_DAY           = true                            // 1日目の発言を許可するか
 	RESPONSE_TIMEOUT            = time.Duration(90) * time.Second // タイムアウト時間
-	ACTION_TIMEOUT              = time.Duration(30) * time.Second // タイムアウト時間
+	ACTION_TIMEOUT              = time.Duration(60) * time.Second // タイムアウト時間
 	MAX_REVOTE_COUNT            = 1                               // 最大再投票回数
 	MAX_ATTACK_REVOTE_COUNT     = 1                               // 最大襲撃再投票回数
 )

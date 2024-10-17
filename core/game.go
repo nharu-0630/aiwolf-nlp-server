@@ -41,9 +41,9 @@ func NewGame(settings model.Settings, conns []*websocket.Conn) *Game {
 	}
 }
 
-func (g *Game) sendRequestToEveryone(request model.Request) {
+func (g *Game) RequestToEveryone(request model.Request) {
 	for _, agent := range g.Agents {
-		g.sendRequest(agent, request)
+		g.RequestToAgent(agent, request)
 	}
 }
 
@@ -57,13 +57,13 @@ func (g *Game) Start() {
 		g.CurrentDay++
 		slog.Info("日付が進みました", "id", g.ID, "day", g.CurrentDay)
 	}
-	g.sendRequestToEveryone(model.R_FINISH)
+	g.RequestToEveryone(model.R_FINISH)
 	slog.Info("ゲームが終了しました", "id", g.ID, "winningTeam", utils.CalcWinSideTeam(g.GameStatuses[g.CurrentDay].StatusMap))
 }
 
 func (g *Game) progressDay() {
 	slog.Info("昼を開始します", "id", g.ID, "day", g.CurrentDay)
-	g.sendRequestToEveryone(model.R_DAILY_INITIALIZE)
+	g.RequestToEveryone(model.R_DAILY_INITIALIZE)
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
 	}
@@ -73,7 +73,7 @@ func (g *Game) progressDay() {
 
 func (g *Game) progressNight() {
 	slog.Info("夜を開始します", "id", g.ID, "day", g.CurrentDay)
-	g.sendRequestToEveryone(model.R_DAILY_FINISH)
+	g.RequestToEveryone(model.R_DAILY_FINISH)
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
 	}
@@ -108,6 +108,19 @@ func (g *Game) doExecution() {
 		g.GameStatuses[g.CurrentDay].StatusMap[*executed] = model.S_DEAD
 		g.GameStatuses[g.CurrentDay].ExecutedAgent = executed
 		slog.Info("追放結果を設定しました", "id", g.ID, "agent", executed.Name)
+
+		mediums := utils.FilterAgents(g.Agents, func(agent *model.Agent) bool {
+			return agent.Role == model.R_MEDIUM
+		})
+		if len(mediums) > 0 {
+			g.GameStatuses[g.CurrentDay].MediumResult = &model.Judge{
+				Day:    g.GameStatuses[g.CurrentDay].Day,
+				Agent:  *mediums[0],
+				Target: *executed,
+				Result: executed.Role.Species,
+			}
+			slog.Info("霊能結果を設定しました", "id", g.ID, "target", executed.Name, "result", executed.Role.Species)
+		}
 	} else {
 		slog.Warn("追放対象がいないため、追放結果を設定しません", "id", g.ID)
 	}
@@ -211,7 +224,7 @@ func (g *Game) conductGuard(agent *model.Agent) {
 }
 
 func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*model.Agent, error) {
-	name, err := g.sendRequest(agent, request)
+	name, err := g.RequestToAgent(agent, request)
 	if err != nil {
 		return nil, err
 	}
@@ -295,26 +308,41 @@ func (g *Game) doWhisper() {
 	if len(werewolfs) < 2 {
 		return
 	}
-	g.conductCommunication(werewolfs, model.R_WHISPER, &g.GameStatuses[g.CurrentDay].WhisperList, g.Settings.MaxWhisperTurn)
+	g.conductCommunication(werewolfs, model.R_WHISPER)
 }
 
 func (g *Game) doTalk() {
 	slog.Info("発言フェーズを開始します", "id", g.ID, "day", g.CurrentDay)
 	g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalk)
 	agents := g.getAliveAgents()
-	g.conductCommunication(agents, model.R_TALK, &g.GameStatuses[g.CurrentDay].TalkList, g.Settings.MaxTalkTurn)
+	g.conductCommunication(agents, model.R_TALK)
 }
 
-func (g *Game) conductCommunication(agents []*model.Agent, request model.Request, talkList *[]model.Talk, turnCount int) {
+func (g *Game) conductCommunication(agents []*model.Agent, request model.Request) {
+	var turn int
+	var remainMap map[model.Agent]int
+	var talkList *[]model.Talk
+	switch request {
+	case model.R_TALK:
+		turn = g.Settings.MaxTalk
+		remainMap = g.GameStatuses[g.CurrentDay].RemainTalkMap
+		talkList = &g.GameStatuses[g.CurrentDay].TalkList
+	case model.R_WHISPER:
+		turn = g.Settings.MaxWhisper
+		remainMap = g.GameStatuses[g.CurrentDay].RemainWhisperMap
+		talkList = &g.GameStatuses[g.CurrentDay].WhisperList
+	}
+
 	rand.Shuffle(len(agents), func(i, j int) {
 		agents[i], agents[j] = agents[j], agents[i]
 	})
 	skipCountMap := make(map[*model.Agent]int)
 	idx := 0
-	for i := 0; i < turnCount; i++ {
+
+	for i := 0; i < turn; i++ {
 		cnt := false
 		for _, agent := range agents {
-			if g.GameStatuses[g.CurrentDay].RemainTalkMap[*agent] == 0 {
+			if remainMap[*agent] == 0 {
 				continue
 			}
 			text := g.getTalkWhisperText(agent, request, skipCountMap)
@@ -329,6 +357,9 @@ func (g *Game) conductCommunication(agents []*model.Agent, request model.Request
 			*talkList = append(*talkList, talk)
 			if text != model.T_OVER {
 				cnt = true
+			} else {
+				remainMap[*agent] = 0
+				slog.Info("発言がオーバーであるため、残り発言回数を0にしました", "id", g.ID, "agent", agent.Name)
 			}
 			slog.Info("発言を受信しました", "id", g.ID, "agent", agent.Name, "text", text)
 		}
@@ -339,7 +370,7 @@ func (g *Game) conductCommunication(agents []*model.Agent, request model.Request
 }
 
 func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, skipCountMap map[*model.Agent]int) string {
-	text, err := g.sendRequest(agent, request)
+	text, err := g.RequestToAgent(agent, request)
 	if err != nil {
 		text = model.T_SKIP
 		slog.Warn("リクエストの送信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
@@ -361,7 +392,7 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 	return text
 }
 
-func (g *Game) sendRequest(agent *model.Agent, request model.Request) (string, error) {
+func (g *Game) RequestToAgent(agent *model.Agent, request model.Request) (string, error) {
 	info := model.NewInfo(agent, g.GameStatuses[g.CurrentDay], g.GameStatuses[g.CurrentDay-1], g.Settings)
 	switch request {
 	case model.R_NAME, model.R_ROLE:
