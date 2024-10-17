@@ -64,7 +64,7 @@ func TestGame(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Create the required number of websocket clients in parallel
-	for i := 0; i < config.GAME_AGENT_COUNT; i++ {
+	for i := 0; i < config.AGENT_COUNT_PER_GAME; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"math/rand"
+	"time"
 
 	"github.com/dgryski/trifles/uuid"
 	"github.com/gorilla/websocket"
@@ -67,6 +68,7 @@ func (g *Game) progressDay() {
 		g.doWhisper()
 	}
 	g.doTalk()
+	slog.Info("昼を終了します", "id", g.ID, "day", g.CurrentDay)
 }
 
 func (g *Game) progressNight() {
@@ -84,6 +86,7 @@ func (g *Game) progressNight() {
 		g.doGuard()
 		g.doAttack()
 	}
+	slog.Info("夜を終了します", "id", g.ID, "day", g.CurrentDay)
 }
 
 func (g *Game) doExecution() {
@@ -108,6 +111,7 @@ func (g *Game) doExecution() {
 	} else {
 		slog.Info("追放対象がいないため、追放結果を設定しません", "id", g.ID)
 	}
+	slog.Info("追放フェーズを終了します", "id", g.ID, "day", g.CurrentDay)
 }
 
 func (g *Game) doAttack() {
@@ -130,6 +134,7 @@ func (g *Game) doAttack() {
 			slog.Info("襲撃対象がいないため、襲撃結果を設定しません", "id", g.ID)
 		}
 	}
+	slog.Info("襲撃フェーズを終了します", "id", g.ID, "day", g.CurrentDay)
 }
 
 func (g *Game) conductAttackVote() *model.Agent {
@@ -158,6 +163,7 @@ func (g *Game) doDivine() {
 			break
 		}
 	}
+	slog.Info("占いフェーズを終了します", "id", g.ID, "day", g.CurrentDay)
 }
 
 func (g *Game) conductDivination(agent *model.Agent) {
@@ -171,6 +177,8 @@ func (g *Game) conductDivination(agent *model.Agent) {
 			Result: target.Role.Species,
 		}
 		slog.Info("占い結果を設定しました", "id", g.ID, "target", target.Name, "result", target.Role.Species)
+	} else {
+		slog.Warn("占い対象が見つからなかったため、占い結果を設定しません", "id", g.ID)
 	}
 }
 
@@ -194,6 +202,8 @@ func (g *Game) conductGuard(agent *model.Agent) {
 			Target: *target,
 		}
 		slog.Info("護衛対象を設定しました", "id", g.ID, "target", target.Name)
+	} else {
+		slog.Warn("護衛対象が見つからなかったため、護衛対象を設定しません", "id", g.ID)
 	}
 }
 
@@ -352,18 +362,18 @@ func (g *Game) sendRequest(agent *model.Agent, request model.Request) (string, e
 	info := model.NewInfo(agent, g.GameStatuses[g.CurrentDay], g.GameStatuses[g.CurrentDay-1], g.Settings)
 	switch request {
 	case model.R_NAME, model.R_ROLE:
-		return agent.SendPacket(model.Packet{Request: &request})
+		return agent.SendPacket(model.Packet{Request: &request}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
 	case model.R_INITIALIZE, model.R_DAILY_INITIALIZE:
 		g.resetLastIdxMaps()
-		return agent.SendPacket(model.Packet{Request: &request, Info: &info, Settings: &g.Settings})
+		return agent.SendPacket(model.Packet{Request: &request, Info: &info, Settings: &g.Settings}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
 	case model.R_VOTE, model.R_DIVINE, model.R_GUARD, model.R_ATTACK:
-		return agent.SendPacket(model.Packet{Request: &request, Info: &info})
+		return agent.SendPacket(model.Packet{Request: &request, Info: &info}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
 	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER:
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
-		return agent.SendPacket(model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers})
+		return agent.SendPacket(model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
 	case model.R_FINISH:
 		info.RoleMap = utils.GetRoleMap(g.Agents)
-		return agent.SendPacket(model.Packet{Request: &request, Info: &info})
+		return agent.SendPacket(model.Packet{Request: &request, Info: &info}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
 	}
 	return "", errors.New("一致するリクエストがありません")
 }

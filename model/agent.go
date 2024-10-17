@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,6 +26,8 @@ func NewAgent(idx int, role Role, conn *websocket.Conn) (*Agent, error) {
 		Packet{
 			Request: &R_NAME,
 		},
+		3*time.Minute,
+		15*time.Minute,
 	)
 	if err != nil {
 		return nil, err
@@ -34,7 +37,7 @@ func NewAgent(idx int, role Role, conn *websocket.Conn) (*Agent, error) {
 	return agent, nil
 }
 
-func (a *Agent) SendPacket(packet Packet) (string, error) {
+func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Duration) (string, error) {
 	req, err := json.Marshal(packet)
 	if err != nil {
 		slog.Error("パケットの作成に失敗しました", "error", err)
@@ -47,14 +50,42 @@ func (a *Agent) SendPacket(packet Packet) (string, error) {
 	}
 	slog.Info("パケットを送信しました", "agent", a.Name, "packet", packet)
 	if packet.Request.RequiredResponse {
+		a.Connection.SetReadDeadline(time.Now().Add(actionTimeout))
 		_, res, err := a.Connection.ReadMessage()
 		if err != nil {
-			slog.Error("レスポンスの受信に失敗しました", "error", err)
-			return "", err
-		}
-		if string(res) == "" {
-			slog.Error("レスポンスが空です")
-			return "", errors.New("レスポンスが空です")
+			if websocket.IsUnexpectedCloseError(err) || websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				slog.Error("接続が閉じられました", "error", err)
+				return "", err
+			}
+			a.Connection.SetReadDeadline(time.Now().Add(responseTimeout))
+			for {
+				slog.Warn("レスポンスの受信がタイムアウトしました。ヘルスチェックのリクエストを再送します", "agent", a.Name)
+				req, err := json.Marshal(Packet{Request: &R_NAME})
+				if err != nil {
+					slog.Error("パケットの作成に失敗しました", "error", err)
+					return "", err
+				}
+				err = a.Connection.WriteMessage(websocket.TextMessage, req)
+				if err != nil {
+					slog.Error("パケットの送信に失敗しました", "error", err)
+					return "", err
+				}
+				slog.Info("パケットを送信しました", "agent", a.Name, "packet", packet)
+				_, res, err = a.Connection.ReadMessage()
+				if err != nil {
+					slog.Error("レスポンスの再受信がタイムアウトしました", "error", err)
+					return "", err
+				}
+				if len(res) == 0 {
+					slog.Error("レスポンスが空です")
+					return "", errors.New("レスポンスが空です")
+				}
+				if string(res) == a.Name {
+					slog.Info("ヘルスチェックのレスポンスを受信しました", "agent", a.Name, "response", string(res))
+					break
+				}
+			}
+			return "", nil
 		}
 		slog.Info("レスポンスを受信しました", "agent", a.Name, "response", string(res))
 		return string(res), nil

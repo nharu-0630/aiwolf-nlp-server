@@ -33,12 +33,12 @@ func NewServer() *Server {
 
 func (s *Server) Run() {
 	http.HandleFunc("/", s.handleConnections)
+	slog.Info("サーバを起動しました", "host", config.WEBSOCKET_HOST, "port", config.WEBSOCKET_PORT)
 	err := http.ListenAndServe(config.WEBSOCKET_HOST+":"+strconv.Itoa(config.WEBSOCKET_PORT), nil)
 	if err != nil {
 		slog.Error("サーバの起動に失敗しました", "error", err)
 		return
 	}
-	slog.Info("サーバを起動しました", "host", config.WEBSOCKET_HOST, "port", config.WEBSOCKET_PORT)
 }
 
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +53,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 	slog.Info("新しいクライアントが接続しました", "remote_addr", conn.RemoteAddr().String())
 
-	if len(s.connections) == config.GAME_AGENT_COUNT {
+	if len(s.connections) == config.AGENT_COUNT_PER_GAME {
 		slog.Info("ゲームを開始します")
 		gameSetting, err := model.NewSettings()
 		if err != nil {
