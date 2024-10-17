@@ -19,4 +19,5 @@ const (
 	ACTION_TIMEOUT              = time.Duration(60) * time.Second // タイムアウト時間
 	MAX_REVOTE_COUNT            = 1                               // 最大再投票回数
 	MAX_ATTACK_REVOTE_COUNT     = 1                               // 最大襲撃再投票回数
+	MAX_HAS_ERROR_AGENTS_RATIO  = 0.2                             // ゲームを継続するエラーエージェントの最大割合
 )

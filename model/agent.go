@@ -12,10 +12,11 @@ import (
 )
 
 type Agent struct {
-	Idx        int             `json:"idx"`  // インデックス
-	Name       string          `json:"name"` // 名前
-	Role       Role            `json:"role"` // 役職
-	Connection *websocket.Conn `json:"-"`    // 接続
+	Idx        int             `json:"idx"`       // インデックス
+	Name       string          `json:"name"`      // 名前
+	Role       Role            `json:"role"`      // 役職
+	Connection *websocket.Conn `json:"-"`         // 接続
+	HasError   bool            `json:"has_error"` // エラーが発生したかどうか
 }
 
 func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
@@ -30,14 +31,20 @@ func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
 }
 
 func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Duration) (string, error) {
+	if a.HasError {
+		slog.Error("エージェントにエラーが発生しているため、リクエストを送信できません", "agent", a.Name)
+		return "", errors.New("エージェントにエラーが発生しているため、リクエストを送信できません")
+	}
 	req, err := json.Marshal(packet)
 	if err != nil {
 		slog.Error("パケットの作成に失敗しました", "error", err)
+		a.HasError = true
 		return "", err
 	}
 	err = a.Connection.WriteMessage(websocket.TextMessage, req)
 	if err != nil {
 		slog.Error("パケットの送信に失敗しました", "error", err)
+		a.HasError = true
 		return "", err
 	}
 	slog.Info("パケットを送信しました", "agent", a.Name, "packet", packet)
@@ -59,6 +66,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		case err := <-errChan:
 			if websocket.IsUnexpectedCloseError(err) || websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 				slog.Error("接続が閉じられました", "error", err)
+				a.HasError = true
 				return "", err
 			}
 			slog.Warn("レスポンスの受信に失敗したため、NAMEリクエストを送信します", "agent", a.Name, "error", err)
@@ -68,11 +76,13 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		nameReq, err := json.Marshal(Packet{Request: &R_NAME})
 		if err != nil {
 			slog.Error("NAMEパケットの作成に失敗しました", "error", err)
+			a.HasError = true
 			return "", err
 		}
 		err = a.Connection.WriteMessage(websocket.TextMessage, nameReq)
 		if err != nil {
 			slog.Error("NAMEパケットの送信に失敗しました", "error", err)
+			a.HasError = true
 			return "", err
 		}
 		slog.Info("NAMEパケットを送信しました", "agent", a.Name)
@@ -83,13 +93,16 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 				return "", errors.New("リクエストのレスポンス受信がタイムアウトしました")
 			} else {
 				slog.Error("不正なNAMEリクエストのレスポンスを受信しました", "agent", a.Name, "response", string(res))
+				a.HasError = true
 				return "", errors.New("不正なNAMEリクエストのレスポンスを受信しました")
 			}
 		case err := <-errChan:
 			slog.Error("NAMEリクエストのレスポンス受信に失敗しました", "agent", a.Name, "error", err)
+			a.HasError = true
 			return "", err
 		case <-time.After(responseTimeout):
 			slog.Error("NAMEリクエストのレスポンス受信がタイムアウトしました", "agent", a.Name)
+			a.HasError = true
 			return "", errors.New("NAMEリクエストのレスポンス受信がタイムアウトしました")
 		}
 	}

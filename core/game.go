@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dgryski/trifles/uuid"
+	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 	"github.com/nharu-0630/aiwolf-nlp-server/utils"
 )
@@ -48,16 +49,21 @@ func (g *Game) RequestToEveryone(request model.Request) {
 
 func (g *Game) Start() {
 	slog.Info("ゲームを開始します", "id", g.ID)
-	for utils.CalcWinSideTeam(g.GameStatuses[g.CurrentDay].StatusMap) == model.T_NONE {
+	var winSide model.Team = model.T_NONE
+	for winSide == model.T_NONE && utils.CalcHasErrorAgents(g.Agents) < int(float64(len(g.Agents))*config.MAX_HAS_ERROR_AGENTS_RATIO) {
 		g.progressDay()
 		g.progressNight()
 		gameStatus := g.GameStatuses[g.CurrentDay].NextDay()
 		g.GameStatuses[g.CurrentDay+1] = &gameStatus
 		g.CurrentDay++
 		slog.Info("日付が進みました", "id", g.ID, "day", g.CurrentDay)
+		winSide = utils.CalcWinSideTeam(gameStatus.StatusMap)
+	}
+	if winSide == model.T_NONE {
+		slog.Warn("エラーが多発したため、ゲームを終了します", "id", g.ID)
 	}
 	g.RequestToEveryone(model.R_FINISH)
-	slog.Info("ゲームが終了しました", "id", g.ID, "winningTeam", utils.CalcWinSideTeam(g.GameStatuses[g.CurrentDay].StatusMap))
+	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
 }
 
 func (g *Game) progressDay() {

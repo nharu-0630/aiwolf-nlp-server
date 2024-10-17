@@ -31,6 +31,16 @@ func CalcWinSideTeam(statusMap map[model.Agent]model.Status) model.Team {
 	return model.T_NONE
 }
 
+func CalcHasErrorAgents(agents []*model.Agent) int {
+	var count int
+	for _, a := range agents {
+		if a.HasError {
+			count++
+		}
+	}
+	return count
+}
+
 func GetRoleMap(agents []*model.Agent) map[model.Agent]model.Role {
 	roleMap := make(map[model.Agent]model.Role)
 	for _, a := range agents {
