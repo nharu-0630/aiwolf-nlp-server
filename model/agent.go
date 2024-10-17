@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -64,7 +65,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		select {
 		case res := <-responseChan:
 			slog.Info("レスポンスを受信しました", "agent", a.Name, "response", string(res))
-			return string(res), nil
+			return strings.TrimRight(string(res), "\n"), nil
 		case err := <-errChan:
 			if websocket.IsUnexpectedCloseError(err) || websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 				slog.Error("接続が閉じられました", "error", err)

@@ -12,9 +12,9 @@ const (
 	MAX_WHISPER_COUNT_PER_AGENT = 0                               // 1日あたりの1エージェントの最大囁き回数
 	MAX_WHISPER_COUNT_PER_DAY   = 0                               // 1日あたりの全体の囁き回数
 	MAX_SKIP_COUNT_PER_DAY      = 3                               // 1日あたりの最大スキップ回数
-	IS_ENABLE_NO_ATTACK         = true                            // 襲撃なしの日を許可するか
-	IS_VOTE_VISIBLE             = false                           // 投票の結果を公開するか
-	IS_TALK_ON_FIRST_DAY        = true                            // 1日目の発言を許可するか
+	ALLOW_NO_ATTACK             = true                            // 襲撃なしの日を許可するか
+	VOTE_VISIBILITY             = false                           // 投票の結果を公開するか
+	TALK_ON_FIRST_DAY           = true                            // 1日目の発言を許可するか
 	RESPONSE_TIMEOUT            = time.Duration(90) * time.Second // タイムアウト時間
 	ACTION_TIMEOUT              = time.Duration(30) * time.Second // タイムアウト時間
 	MAX_REVOTE_COUNT            = 1                               // 最大再投票回数

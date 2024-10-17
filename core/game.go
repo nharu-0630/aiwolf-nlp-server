@@ -152,6 +152,9 @@ func (g *Game) conductAttackVote() *model.Agent {
 }
 
 func (g *Game) isGuarded(attacked *model.Agent) bool {
+	if g.GameStatuses[g.CurrentDay].Guard == nil {
+		return false
+	}
 	return g.GameStatuses[g.CurrentDay].Guard.Target == *attacked && g.GameStatuses[g.CurrentDay].StatusMap[g.GameStatuses[g.CurrentDay].Guard.Agent] == model.S_ALIVE
 }
 
