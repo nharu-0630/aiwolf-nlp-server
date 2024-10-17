@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -16,7 +17,7 @@ type Server struct {
 	upgrader    websocket.Upgrader
 	connections []*websocket.Conn
 	games       map[*Game]*websocket.Conn
-	mu          sync.Mutex
+	mu          sync.RWMutex
 }
 
 func NewServer() *Server {
@@ -32,13 +33,36 @@ func NewServer() *Server {
 }
 
 func (s *Server) Run() {
-	http.HandleFunc("/", s.handleConnections)
+	http.HandleFunc("/ws", s.handleConnections)
+	http.HandleFunc("/health", s.handleHealthCheck)
 	slog.Info("サーバを起動しました", "host", config.WEBSOCKET_HOST, "port", config.WEBSOCKET_PORT)
 	err := http.ListenAndServe(config.WEBSOCKET_HOST+":"+strconv.Itoa(config.WEBSOCKET_PORT), nil)
 	if err != nil {
 		slog.Error("サーバの起動に失敗しました", "error", err)
 		return
 	}
+}
+
+func (s *Server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	progresses := []map[string]interface{}{}
+	for game := range s.games {
+		progress := map[string]interface{}{
+			"id":  game.ID,
+			"day": game.CurrentDay,
+		}
+		progresses = append(progresses, progress)
+	}
+	status := map[string]interface{}{
+		"status":   "running",
+		"progress": progresses,
+	}
+	json.NewEncoder(w).Encode(status)
 }
 
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {

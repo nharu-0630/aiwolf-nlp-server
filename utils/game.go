@@ -44,7 +44,7 @@ func CreateAgents(conns []*websocket.Conn, roles map[model.Role]int) []*model.Ag
 	agents := make([]*model.Agent, 0)
 	for i, conn := range conns {
 		role := assignRole(roles)
-		agent, err := model.NewAgent(i, role, conn)
+		agent, err := model.NewAgent(i+1, role, conn)
 		if err != nil {
 			log.Panic(err)
 		}

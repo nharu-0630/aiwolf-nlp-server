@@ -47,23 +47,20 @@ func teardownWebSocketConnection(c *websocket.Conn, done chan struct{}) {
 }
 
 func TestGame(t *testing.T) {
-	// Start the server
 	go func() {
 		server := core.NewServer()
 		server.Run()
 	}()
-	// Wait for the server to start
 	time.Sleep(1 * time.Second)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: config.WEBSOCKET_HOST + ":" + strconv.Itoa(config.WEBSOCKET_PORT), Path: "/"}
+	u := url.URL{Scheme: "ws", Host: config.WEBSOCKET_HOST + ":" + strconv.Itoa(config.WEBSOCKET_PORT), Path: "/ws"}
 	log.Printf("connecting to %s", u.String())
 
 	var wg sync.WaitGroup
 
-	// Create the required number of websocket clients in parallel
 	for i := 0; i < config.AGENT_COUNT_PER_GAME; i++ {
 		wg.Add(1)
 		go func() {
@@ -87,8 +84,6 @@ func TestGame(t *testing.T) {
 				case <-interrupt:
 					log.Println("interrupt")
 
-					// Cleanly close the connection by sending a close message and then
-					// waiting (with timeout) for the server to close the connection.
 					err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 					if err != nil {
 						log.Printf("write close: %v", err)
