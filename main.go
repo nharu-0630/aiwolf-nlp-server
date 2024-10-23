@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	host := config.WEBSOCKET_INTERNAL_HOST
-	port := config.WEBSOCKET_PORT
-	server := core.NewServer(host, port)
+	server := core.NewServer(config.WEBSOCKET_INTERNAL_HOST, config.WEBSOCKET_PORT)
 	server.Run()
 }

@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/nharu-0630/aiwolf-nlp-server/logic"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
@@ -17,7 +18,7 @@ type Server struct {
 	port        int
 	upgrader    websocket.Upgrader
 	waitingRoom *WaitingRoom
-	games       []*Game
+	games       []*logic.Game
 	mu          sync.RWMutex
 }
 
@@ -31,7 +32,7 @@ func NewServer(host string, port int) *Server {
 			},
 		},
 		waitingRoom: NewWaitingRoom(),
-		games:       make([]*Game, 0),
+		games:       make([]*logic.Game, 0),
 	}
 }
 
@@ -92,7 +93,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	connections := s.waitingRoom.GetConnections()
-	game := NewGame(gameSetting, connections)
+	game := logic.NewGame(gameSetting, connections)
 
 	s.mu.Lock()
 	s.games = append(s.games, game)
