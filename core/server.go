@@ -15,14 +15,18 @@ import (
 )
 
 type Server struct {
+	host        string
+	port        int
 	upgrader    websocket.Upgrader
 	connections map[string][]model.Connection
 	games       map[*Game]*websocket.Conn
 	mu          sync.RWMutex
 }
 
-func NewServer() *Server {
+func NewServer(host string, port int) *Server {
 	return &Server{
+		host: host,
+		port: port,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
@@ -36,8 +40,8 @@ func NewServer() *Server {
 func (s *Server) Run() {
 	http.HandleFunc("/ws", s.handleConnections)
 	http.HandleFunc("/health", s.handleHealthCheck)
-	slog.Info("サーバを起動しました", "host", config.WEBSOCKET_HOST, "port", config.WEBSOCKET_PORT)
-	err := http.ListenAndServe(config.WEBSOCKET_HOST+":"+strconv.Itoa(config.WEBSOCKET_PORT), nil)
+	slog.Info("サーバを起動しました", "host", s.host, "port", s.port)
+	err := http.ListenAndServe(s.host+":"+strconv.Itoa(s.port), nil)
 	if err != nil {
 		slog.Error("サーバの起動に失敗しました", "error", err)
 		return

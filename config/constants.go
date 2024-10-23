@@ -3,8 +3,8 @@ package config
 import "time"
 
 const (
-	WEBSOCKET_HOST = "127.0.0.1" // ネットワーク受信接続の警告を回避するため
-	// WEBSOCKET_HOST              = "0.0.0.0"                       // 外部接続を許可する場合
+	WEBSOCKET_INTERNAL_HOST     = "127.0.0.1"                     // ネットワーク受信接続の警告を回避するため
+	WEBSOCKET_EXTERNAL_HOST     = "0.0.0.0"                       // 外部接続を許可する場合
 	WEBSOCKET_PORT              = 8080                            // ポート番号
 	AGENT_COUNT_PER_GAME        = 5                               // ゲームあたりのエージェント数
 	MAX_TALK_COUNT_PER_AGENT    = 0                               // 1日あたりの1エージェントの最大発言回数

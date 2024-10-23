@@ -3,6 +3,7 @@ package test
 import (
 	"log"
 	"net/url"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -44,12 +45,17 @@ func teardownWebSocketConnection(c *websocket.Conn, done chan struct{}) {
 }
 
 func TestConnectServer(t *testing.T) {
+	host := config.WEBSOCKET_INTERNAL_HOST
+	if _, exists := os.LookupEnv("GITHUB_ACTIONS"); exists {
+		host = config.WEBSOCKET_EXTERNAL_HOST
+	}
+	port := config.WEBSOCKET_PORT
 	go func() {
-		server := core.NewServer()
+		server := core.NewServer(host, port)
 		server.Run()
 	}()
 
-	u := url.URL{Scheme: "ws", Host: config.WEBSOCKET_HOST + ":" + strconv.Itoa(config.WEBSOCKET_PORT), Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: host + ":" + strconv.Itoa(port), Path: "/ws"}
 	log.Printf("connecting to %s", u.String())
 
 	c, done := setupWebSocketConnection(u, t)
