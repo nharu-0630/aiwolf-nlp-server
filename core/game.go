@@ -188,7 +188,7 @@ func (g *Game) doDivine() {
 }
 
 func (g *Game) conductDivination(agent *model.Agent) {
-	slog.Info("占いアクションを開始します", "id", g.ID, "agent", agent.Name)
+	slog.Info("占いアクションを開始します", "id", g.ID, "agent", agent.String())
 	target, err := g.findTargetByRequest(agent, model.R_DIVINE)
 	if err == nil {
 		g.GameStatuses[g.CurrentDay].DivineResult = &model.Judge{
@@ -214,7 +214,7 @@ func (g *Game) doGuard() {
 }
 
 func (g *Game) conductGuard(agent *model.Agent) {
-	slog.Info("護衛アクションを実行します", "id", g.ID, "agent", agent.Name)
+	slog.Info("護衛アクションを実行します", "id", g.ID, "agent", agent.String())
 	target, err := g.findTargetByRequest(agent, model.R_GUARD)
 	if err == nil {
 		g.GameStatuses[g.CurrentDay].Guard = &model.Guard{
@@ -237,7 +237,7 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 	if target == nil {
 		return nil, errors.New("対象エージェントが見つかりません")
 	}
-	slog.Info("対象エージェントを受信しました", "id", g.ID, "agent", agent.Name, "target", target.Name)
+	slog.Info("対象エージェントを受信しました", "id", g.ID, "agent", agent.String(), "target", target.Name)
 	return target, nil
 }
 
@@ -301,7 +301,7 @@ func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []mode
 			Agent:  *agent,
 			Target: *target,
 		})
-		slog.Info("投票を受信しました", "id", g.ID, "agent", agent.Name, "target", target.Name)
+		slog.Info("投票を受信しました", "id", g.ID, "agent", agent.String(), "target", target.Name)
 	}
 	return votes
 }
@@ -364,9 +364,9 @@ func (g *Game) conductCommunication(agents []*model.Agent, request model.Request
 				cnt = true
 			} else {
 				remainMap[*agent] = 0
-				slog.Info("発言がオーバーであるため、残り発言回数を0にしました", "id", g.ID, "agent", agent.Name)
+				slog.Info("発言がオーバーであるため、残り発言回数を0にしました", "id", g.ID, "agent", agent.String())
 			}
-			slog.Info("発言を受信しました", "id", g.ID, "agent", agent.Name, "text", text)
+			slog.Info("発言を受信しました", "id", g.ID, "agent", agent.String(), "text", text)
 		}
 		if !cnt {
 			break
@@ -378,28 +378,28 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 	text, err := g.RequestToAgent(agent, request)
 	if text == model.T_FORCE_SKIP {
 		text = model.T_SKIP
-		slog.Warn("クライアントから強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
+		slog.Warn("クライアントから強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
 	if err != nil {
 		text = model.T_FORCE_SKIP
-		slog.Warn("リクエストの送受信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
+		slog.Warn("リクエストの送受信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
 	g.GameStatuses[g.CurrentDay].RemainTalkMap[*agent]--
 	if text == model.T_SKIP {
 		skipCountMap[agent]++
 		if skipCountMap[agent] >= g.Settings.MaxSkip {
 			text = model.T_OVER
-			slog.Warn("スキップ回数が上限に達したため、発言をオーバーに置換しました", "id", g.ID, "agent", agent.Name)
+			slog.Warn("スキップ回数が上限に達したため、発言をオーバーに置換しました", "id", g.ID, "agent", agent.String())
 		} else {
-			slog.Info("発言をスキップしました", "id", g.ID, "agent", agent.Name)
+			slog.Info("発言をスキップしました", "id", g.ID, "agent", agent.String())
 		}
 	} else if text == model.T_FORCE_SKIP {
 		text = model.T_SKIP
-		slog.Warn("強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.Name)
+		slog.Warn("強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
 	if text != model.T_OVER && text != model.T_SKIP && text != model.T_FORCE_SKIP {
 		skipCountMap[agent] = 0
-		slog.Info("発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました", "id", g.ID, "agent", agent.Name)
+		slog.Info("発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました", "id", g.ID, "agent", agent.String())
 	}
 	return text
 }

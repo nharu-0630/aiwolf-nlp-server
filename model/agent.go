@@ -25,14 +25,15 @@ func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
 		Name:       conn.Name,
 		Role:       role,
 		Connection: conn.Conn,
+		HasError:   false,
 	}
-	slog.Info("エージェントを作成しました", "agent", agent.Name, "role", agent.Role, "connection", agent.Connection.RemoteAddr())
+	slog.Info("エージェントを作成しました", "idx", agent.Idx, "agent", agent.String(), "role", agent.Role, "connection", agent.Connection.RemoteAddr())
 	return agent, nil
 }
 
 func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Duration) (string, error) {
 	if a.HasError {
-		slog.Error("エージェントにエラーが発生しているため、リクエストを送信できません", "agent", a.Name)
+		slog.Error("エージェントにエラーが発生しているため、リクエストを送信できません", "agent", a.String())
 		return "", errors.New("エージェントにエラーが発生しているため、リクエストを送信できません")
 	}
 	req, err := json.Marshal(packet)
@@ -47,7 +48,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		a.HasError = true
 		return "", err
 	}
-	slog.Info("パケットを送信しました", "agent", a.Name, "packet", packet)
+	slog.Info("パケットを送信しました", "agent", a.String(), "packet", packet)
 	if packet.Request.RequiredResponse {
 		responseChan := make(chan []byte)
 		errChan := make(chan error)
@@ -61,7 +62,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		}()
 		select {
 		case res := <-responseChan:
-			slog.Info("レスポンスを受信しました", "agent", a.Name, "response", string(res))
+			slog.Info("レスポンスを受信しました", "agent", a.String(), "response", string(res))
 			return strings.TrimRight(string(res), "\n"), nil
 		case err := <-errChan:
 			if websocket.IsUnexpectedCloseError(err) || websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
@@ -69,9 +70,9 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 				a.HasError = true
 				return "", err
 			}
-			slog.Warn("レスポンスの受信に失敗したため、NAMEリクエストを送信します", "agent", a.Name, "error", err)
+			slog.Warn("レスポンスの受信に失敗したため、NAMEリクエストを送信します", "agent", a.String(), "error", err)
 		case <-time.After(actionTimeout):
-			slog.Warn("レスポンスの受信がタイムアウトしたため、NAMEリクエストを送信します", "agent", a.Name)
+			slog.Warn("レスポンスの受信がタイムアウトしたため、NAMEリクエストを送信します", "agent", a.String())
 		}
 		nameReq, err := json.Marshal(Packet{Request: &R_NAME})
 		if err != nil {
@@ -85,23 +86,23 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 			a.HasError = true
 			return "", err
 		}
-		slog.Info("NAMEパケットを送信しました", "agent", a.Name)
+		slog.Info("NAMEパケットを送信しました", "agent", a.String())
 		select {
 		case res := <-responseChan:
-			if string(res) == a.Name {
-				slog.Info("NAMEリクエストのレスポンスを受信しました", "agent", a.Name, "response", string(res))
+			if string(res) == a.String() {
+				slog.Info("NAMEリクエストのレスポンスを受信しました", "agent", a.String(), "response", string(res))
 				return "", errors.New("リクエストのレスポンス受信がタイムアウトしました")
 			} else {
-				slog.Error("不正なNAMEリクエストのレスポンスを受信しました", "agent", a.Name, "response", string(res))
+				slog.Error("不正なNAMEリクエストのレスポンスを受信しました", "agent", a.String(), "response", string(res))
 				a.HasError = true
 				return "", errors.New("不正なNAMEリクエストのレスポンスを受信しました")
 			}
 		case err := <-errChan:
-			slog.Error("NAMEリクエストのレスポンス受信に失敗しました", "agent", a.Name, "error", err)
+			slog.Error("NAMEリクエストのレスポンス受信に失敗しました", "agent", a.String(), "error", err)
 			a.HasError = true
 			return "", err
 		case <-time.After(responseTimeout):
-			slog.Error("NAMEリクエストのレスポンス受信がタイムアウトしました", "agent", a.Name)
+			slog.Error("NAMEリクエストのレスポンス受信がタイムアウトしました", "agent", a.String())
 			a.HasError = true
 			return "", errors.New("NAMEリクエストのレスポンス受信がタイムアウトしました")
 		}
@@ -114,8 +115,5 @@ func (a Agent) String() string {
 }
 
 func (a Agent) MarshalJSON() ([]byte, error) {
-	if a == (Agent{}) {
-		return json.Marshal(nil)
-	}
 	return json.Marshal(a.String())
 }
