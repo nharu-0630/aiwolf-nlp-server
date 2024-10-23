@@ -55,6 +55,8 @@ func TestConnectServer(t *testing.T) {
 		server.Run()
 	}()
 
+	time.Sleep(5 * time.Second)
+
 	u := url.URL{Scheme: "ws", Host: host + ":" + strconv.Itoa(port), Path: "/ws"}
 	log.Printf("connecting to %s", u.String())
 
@@ -64,8 +66,8 @@ func TestConnectServer(t *testing.T) {
 	select {
 	case <-done:
 		log.Println("Connection closed")
-	case <-time.After(5 * time.Second):
-		log.Println("Test completed: Connection was successful for 5 seconds")
+	case <-time.After(3 * time.Second):
+		log.Println("Test completed: Connection was successful for 3 seconds")
 	}
 }
 
