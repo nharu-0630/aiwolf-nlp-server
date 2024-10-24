@@ -71,3 +71,29 @@ func assignRole(roles map[model.Role]int) model.Role {
 	}
 	return model.R_VILLAGER
 }
+
+func GetCandidates(votes []model.Vote, condition func(model.Vote) bool) []*model.Agent {
+	counter := make(map[*model.Agent]int)
+	for _, vote := range votes {
+		if condition(vote) {
+			counter[&vote.Target]++
+		}
+	}
+	return getMaxCountCandidates(counter)
+}
+
+func getMaxCountCandidates(counter map[*model.Agent]int) []*model.Agent {
+	var max int
+	for _, count := range counter {
+		if count > max {
+			max = count
+		}
+	}
+	candidates := make([]*model.Agent, 0)
+	for agent, count := range counter {
+		if count == max {
+			candidates = append(candidates, agent)
+		}
+	}
+	return candidates
+}
