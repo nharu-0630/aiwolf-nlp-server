@@ -2,7 +2,6 @@ package core
 
 import (
 	"encoding/json"
-	"log"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -72,7 +71,7 @@ func (s *Server) handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	ws, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Panic(err)
+		slog.Error("クライアントのアップグレードに失敗しました", "error", err)
 		return
 	}
 	connection, err := model.NewConnection(ws)
@@ -86,7 +85,6 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("ゲームを開始します")
 	gameSetting, err := model.NewSettings()
 	if err != nil {
 		slog.Error("ゲーム設定の作成に失敗しました", "error", err)
@@ -100,6 +98,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 
 	go func() {
+		slog.Info("ゲームを開始します")
 		game.Start()
 		slog.Info("ゲームが終了しました", "id", game.ID)
 	}()

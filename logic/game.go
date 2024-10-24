@@ -23,13 +23,12 @@ type Game struct {
 }
 
 func NewGame(settings model.Settings, conns []model.Connection) *Game {
-	slog.Info("新規ゲームを作成します")
 	id := uuid.UUIDv4()
 	agents := utils.CreateAgents(conns, settings.RoleNumMap)
 	gameStatus := model.NewInitializeGameStatus(agents)
 	gameStatuses := make(map[int]*model.GameStatus)
 	gameStatuses[0] = &gameStatus
-	slog.Info("ゲームを初期化しました", "id", id)
+	slog.Info("ゲームを作成しました", "id", id)
 	return &Game{
 		ID:                id,
 		Settings:          settings,
@@ -308,34 +307,36 @@ func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []mode
 
 func (g *Game) doWhisper() {
 	slog.Info("囁きフェーズを開始します", "id", g.ID, "day", g.CurrentDay)
-	g.GameStatuses[g.CurrentDay].ResetRemainWhisperMap(g.Settings.MaxWhisper)
-	werewolfs := g.getAliveWerewolves()
-	if len(werewolfs) < 2 {
-		return
-	}
-	g.conductCommunication(werewolfs, model.R_WHISPER)
+	g.conductCommunication(model.R_WHISPER)
 }
 
 func (g *Game) doTalk() {
 	slog.Info("発言フェーズを開始します", "id", g.ID, "day", g.CurrentDay)
-	g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalk)
-	agents := g.getAliveAgents()
-	g.conductCommunication(agents, model.R_TALK)
+	g.conductCommunication(model.R_TALK)
 }
 
-func (g *Game) conductCommunication(agents []*model.Agent, request model.Request) {
-	var turn int
+func (g *Game) conductCommunication(request model.Request) {
+	var agents []*model.Agent
+	var maxTurn int
 	var remainMap map[model.Agent]int
 	var talkList *[]model.Talk
 	switch request {
 	case model.R_TALK:
-		turn = g.Settings.MaxTalk
+		agents = g.getAliveAgents()
+		g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalkTurn)
+		maxTurn = g.Settings.MaxTalk
 		remainMap = g.GameStatuses[g.CurrentDay].RemainTalkMap
 		talkList = &g.GameStatuses[g.CurrentDay].TalkList
 	case model.R_WHISPER:
-		turn = g.Settings.MaxWhisper
+		agents = g.getAliveWerewolves()
+		g.GameStatuses[g.CurrentDay].ResetRemainWhisperMap(g.Settings.MaxWhisperTurn)
+		maxTurn = g.Settings.MaxWhisper
 		remainMap = g.GameStatuses[g.CurrentDay].RemainWhisperMap
 		talkList = &g.GameStatuses[g.CurrentDay].WhisperList
+	}
+
+	if len(agents) < 2 {
+		slog.Warn("エージェント数が2未満のため、通信を行いません", "id", g.ID, "agentNum", len(agents))
 	}
 
 	rand.Shuffle(len(agents), func(i, j int) {
@@ -344,7 +345,7 @@ func (g *Game) conductCommunication(agents []*model.Agent, request model.Request
 	skipCountMap := make(map[*model.Agent]int)
 	idx := 0
 
-	for i := 0; i < turn; i++ {
+	for i := 0; i < maxTurn; i++ {
 		cnt := false
 		for _, agent := range agents {
 			if remainMap[*agent] == 0 {

@@ -23,7 +23,7 @@ func (wr *WaitingRoom) AddConnection(team string, connection model.Connection) {
 	wr.mu.Lock()
 	defer wr.mu.Unlock()
 	wr.connections[team] = append(wr.connections[team], connection)
-	slog.Info("新しいクライアントが待機部屋に追加されました", "team", team)
+	slog.Info("新しいクライアントが待機部屋に追加されました", "team", team, "remote_addr", connection.Conn.RemoteAddr().String())
 }
 
 func (wr *WaitingRoom) IsReady() bool {
