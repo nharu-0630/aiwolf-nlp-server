@@ -32,6 +32,9 @@ func (a *AnalysisServiceImpl) TrackStartGame(id string) {
 	a.id = id
 }
 
+func (a *AnalysisServiceImpl) TrackEndGame() {
+}
+
 func (a *AnalysisServiceImpl) TrackStartRequest(agent model.Agent, packet model.Packet) {
 	a.agentTimestamp[agent.Name] = time.Now().UnixNano()
 	a.agentRequest[agent.Name] = packet
