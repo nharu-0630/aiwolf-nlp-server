@@ -36,22 +36,25 @@ func (g *Game) getAttackVotedCandidates(votes []model.Vote) []*model.Agent {
 
 func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string, error) {
 	info := model.NewInfo(agent, g.GameStatuses[g.CurrentDay], g.GameStatuses[g.CurrentDay-1], g.Settings)
+	var packet model.Packet
 	switch request {
 	case model.R_NAME, model.R_ROLE:
-		return agent.SendPacket(model.Packet{Request: &request}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+		packet = model.Packet{Request: &request}
 	case model.R_INITIALIZE, model.R_DAILY_INITIALIZE:
 		g.resetLastIdxMaps()
-		return agent.SendPacket(model.Packet{Request: &request, Info: &info, Settings: &g.Settings}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+		packet = model.Packet{Request: &request, Info: &info, Settings: &g.Settings}
 	case model.R_VOTE, model.R_DIVINE, model.R_GUARD, model.R_ATTACK:
-		return agent.SendPacket(model.Packet{Request: &request, Info: &info}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+		packet = model.Packet{Request: &request, Info: &info}
 	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER:
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
-		return agent.SendPacket(model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+		packet = model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers}
 	case model.R_FINISH:
 		info.RoleMap = utils.GetRoleMap(g.Agents)
-		return agent.SendPacket(model.Packet{Request: &request, Info: &info}, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+		packet = model.Packet{Request: &request, Info: &info}
+	default:
+		return "", errors.New("一致するリクエストがありません")
 	}
-	return "", errors.New("一致するリクエストがありません")
+	return agent.SendPacket(packet, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
 }
 
 func (g *Game) resetLastIdxMaps() {
