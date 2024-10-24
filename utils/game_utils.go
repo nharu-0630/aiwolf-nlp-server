@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
@@ -55,7 +55,7 @@ func CreateAgents(conns []model.Connection, roles map[model.Role]int) []*model.A
 		role := assignRole(roles)
 		agent, err := model.NewAgent(i+1, role, conn)
 		if err != nil {
-			log.Panic(err)
+			slog.Error("エージェントの作成に失敗しました", "error", err)
 		}
 		agents = append(agents, agent)
 	}
