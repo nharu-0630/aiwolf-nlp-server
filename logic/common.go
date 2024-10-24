@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
-	"github.com/nharu-0630/aiwolf-nlp-server/utils"
+	"github.com/nharu-0630/aiwolf-nlp-server/util"
 )
 
 func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*model.Agent, error) {
@@ -14,7 +14,7 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 	if err != nil {
 		return nil, err
 	}
-	target := utils.FindAgentByName(g.Agents, name)
+	target := util.FindAgentByName(g.Agents, name)
 	if target == nil {
 		return nil, errors.New("対象エージェントが見つかりません")
 	}
@@ -23,13 +23,13 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 }
 
 func (g *Game) getVotedCandidates(votes []model.Vote) []*model.Agent {
-	return utils.GetCandidates(votes, func(vote model.Vote) bool {
+	return util.GetCandidates(votes, func(vote model.Vote) bool {
 		return g.GameStatuses[g.CurrentDay].StatusMap[vote.Target] == model.S_ALIVE
 	})
 }
 
 func (g *Game) getAttackVotedCandidates(votes []model.Vote) []*model.Agent {
-	return utils.GetCandidates(votes, func(vote model.Vote) bool {
+	return util.GetCandidates(votes, func(vote model.Vote) bool {
 		return g.GameStatuses[g.CurrentDay].StatusMap[vote.Target] == model.S_ALIVE && vote.Target.Role.Team != model.T_WEREWOLF
 	})
 }
@@ -61,12 +61,15 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
 		packet = model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers}
 	case model.R_FINISH:
-		info.RoleMap = utils.GetRoleMap(g.Agents)
+		info.RoleMap = util.GetRoleMap(g.Agents)
 		packet = model.Packet{Request: &request, Info: &info}
 	default:
 		return "", errors.New("一致するリクエストがありません")
 	}
-	return agent.SendPacket(packet, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+	g.AnalysisService.TrackStartRequest(*agent, packet)
+	resp, err := agent.SendPacket(packet, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+	g.AnalysisService.TrackEndRequest(*agent, resp, err)
+	return resp, err
 }
 
 func (g *Game) resetLastIdxMaps() {
@@ -83,13 +86,13 @@ func (g *Game) minimize(agent *model.Agent, talks []model.Talk, whispers []model
 }
 
 func (g *Game) getAliveAgents() []*model.Agent {
-	return utils.FilterAgents(g.Agents, func(agent *model.Agent) bool {
+	return util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
 		return g.GameStatuses[g.CurrentDay].StatusMap[*agent] == model.S_ALIVE
 	})
 }
 
 func (g *Game) getAliveWerewolves() []*model.Agent {
-	return utils.FilterAgents(g.Agents, func(agent *model.Agent) bool {
+	return util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
 		return g.GameStatuses[g.CurrentDay].StatusMap[*agent] == model.S_ALIVE && agent.Role.Team == model.T_WEREWOLF
 	})
 }

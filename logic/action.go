@@ -5,7 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
-	"github.com/nharu-0630/aiwolf-nlp-server/utils"
+	"github.com/nharu-0630/aiwolf-nlp-server/util"
 )
 
 func (g *Game) doExecution() {
@@ -21,14 +21,14 @@ func (g *Game) doExecution() {
 		}
 	}
 	if executed == nil {
-		executed = utils.SelectRandomAgent(candidates)
+		executed = util.SelectRandomAgent(candidates)
 	}
 	if executed != nil {
 		g.GameStatuses[g.CurrentDay].StatusMap[*executed] = model.S_DEAD
 		g.GameStatuses[g.CurrentDay].ExecutedAgent = executed
 		slog.Info("追放結果を設定しました", "id", g.ID, "agent", executed.Name)
 
-		mediums := utils.FilterAgents(g.Agents, func(agent *model.Agent) bool {
+		mediums := util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
 			return agent.Role == model.R_MEDIUM
 		})
 		if len(mediums) > 0 {
@@ -53,7 +53,7 @@ func (g *Game) doAttack() {
 	if len(werewolfs) > 0 {
 		attacked = g.conductAttackVote()
 		if attacked == nil && !g.Settings.IsEnableNoAttack {
-			attacked = utils.SelectRandomAgent(g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVoteList))
+			attacked = util.SelectRandomAgent(g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVoteList))
 		}
 
 		if attacked != nil && !g.isGuarded(attacked) {
