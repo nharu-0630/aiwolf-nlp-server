@@ -29,7 +29,7 @@ func NewSettings() (Settings, error) {
 		return Settings{}, errors.New("対応する役職の人数がありません")
 	}
 	settings := Settings{
-		RoleNumMap:       *roleNumMap,
+		RoleNumMap:       roleNumMap,
 		MaxTalk:          config.MAX_TALK_COUNT_PER_AGENT,
 		MaxTalkTurn:      config.MAX_TALK_COUNT_PER_DAY,
 		MaxWhisper:       config.MAX_WHISPER_COUNT_PER_AGENT,
