@@ -98,8 +98,6 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 
 	go func() {
-		slog.Info("ゲームを開始します")
 		game.Start()
-		slog.Info("ゲームが終了しました", "id", game.ID)
 	}()
 }

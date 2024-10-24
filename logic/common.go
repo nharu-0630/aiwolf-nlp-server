@@ -18,7 +18,7 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 	if target == nil {
 		return nil, errors.New("対象エージェントが見つかりません")
 	}
-	slog.Info("対象エージェントを受信しました", "id", g.ID, "agent", agent.String(), "target", target.Name)
+	slog.Info("対象エージェントを受信しました", "id", g.ID, "agent", agent.String(), "target", target.String())
 	return target, nil
 }
 
@@ -34,11 +34,23 @@ func (g *Game) getAttackVotedCandidates(votes []model.Vote) []*model.Agent {
 	})
 }
 
+func (g *Game) closeAllAgents() {
+	for _, agent := range g.Agents {
+		agent.Close()
+	}
+}
+
+func (g *Game) requestToEveryone(request model.Request) {
+	for _, agent := range g.Agents {
+		g.requestToAgent(agent, request)
+	}
+}
+
 func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string, error) {
 	info := model.NewInfo(agent, g.GameStatuses[g.CurrentDay], g.GameStatuses[g.CurrentDay-1], g.Settings)
 	var packet model.Packet
 	switch request {
-	case model.R_NAME, model.R_ROLE:
+	case model.R_NAME:
 		packet = model.Packet{Request: &request}
 	case model.R_INITIALIZE, model.R_DAILY_INITIALIZE:
 		g.resetLastIdxMaps()

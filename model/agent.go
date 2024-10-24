@@ -110,6 +110,11 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 	return "", nil
 }
 
+func (a *Agent) Close() {
+	a.Connection.Close()
+	slog.Info("エージェントをクローズしました", "agent", a.String())
+}
+
 func (a Agent) String() string {
 	return "Agent[" + fmt.Sprintf("%02d", a.Idx) + "]"
 }

@@ -12,10 +12,6 @@ var (
 		Type:             "NAME",
 		RequiredResponse: true,
 	}
-	R_ROLE = Request{
-		Type:             "ROLE",
-		RequiredResponse: true,
-	}
 	R_TALK = Request{
 		Type:             "TALK",
 		RequiredResponse: true}

@@ -38,7 +38,7 @@ func (g *Game) doExecution() {
 				Target: *executed,
 				Result: executed.Role.Species,
 			}
-			slog.Info("霊能結果を設定しました", "id", g.ID, "target", executed.Name, "result", executed.Role.Species)
+			slog.Info("霊能結果を設定しました", "id", g.ID, "target", executed.String(), "result", executed.Role.Species)
 		}
 	} else {
 		slog.Warn("追放対象がいないため、追放結果を設定しません", "id", g.ID)
@@ -111,7 +111,7 @@ func (g *Game) conductDivination(agent *model.Agent) {
 			Target: *target,
 			Result: target.Role.Species,
 		}
-		slog.Info("占い結果を設定しました", "id", g.ID, "target", target.Name, "result", target.Role.Species)
+		slog.Info("占い結果を設定しました", "id", g.ID, "target", target.String(), "result", target.Role.Species)
 	} else {
 		slog.Warn("占い対象が見つからなかったため、占い結果を設定しません", "id", g.ID)
 	}
@@ -136,7 +136,7 @@ func (g *Game) conductGuard(agent *model.Agent) {
 			Agent:  *agent,
 			Target: *target,
 		}
-		slog.Info("護衛対象を設定しました", "id", g.ID, "target", target.Name)
+		slog.Info("護衛対象を設定しました", "id", g.ID, "target", target.String())
 	} else {
 		slog.Warn("護衛対象が見つからなかったため、護衛対象を設定しません", "id", g.ID)
 	}
@@ -164,7 +164,7 @@ func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []mode
 			Agent:  *agent,
 			Target: *target,
 		})
-		slog.Info("投票を受信しました", "id", g.ID, "agent", agent.String(), "target", target.Name)
+		slog.Info("投票を受信しました", "id", g.ID, "agent", agent.String(), "target", target.String())
 	}
 	return votes
 }

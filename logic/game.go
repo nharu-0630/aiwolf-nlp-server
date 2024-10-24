@@ -37,12 +37,6 @@ func NewGame(settings model.Settings, conns []model.Connection) *Game {
 	}
 }
 
-func (g *Game) RequestToEveryone(request model.Request) {
-	for _, agent := range g.Agents {
-		g.requestToAgent(agent, request)
-	}
-}
-
 func (g *Game) Start() {
 	slog.Info("ゲームを開始します", "id", g.ID)
 	var winSide model.Team = model.T_NONE
@@ -58,13 +52,14 @@ func (g *Game) Start() {
 	if winSide == model.T_NONE {
 		slog.Warn("エラーが多発したため、ゲームを終了します", "id", g.ID)
 	}
-	g.RequestToEveryone(model.R_FINISH)
+	g.requestToEveryone(model.R_FINISH)
+	g.closeAllAgents()
 	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
 }
 
 func (g *Game) progressDay() {
 	slog.Info("昼を開始します", "id", g.ID, "day", g.CurrentDay)
-	g.RequestToEveryone(model.R_DAILY_INITIALIZE)
+	g.requestToEveryone(model.R_DAILY_INITIALIZE)
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
 	}
@@ -74,7 +69,7 @@ func (g *Game) progressDay() {
 
 func (g *Game) progressNight() {
 	slog.Info("夜を開始します", "id", g.ID, "day", g.CurrentDay)
-	g.RequestToEveryone(model.R_DAILY_FINISH)
+	g.requestToEveryone(model.R_DAILY_FINISH)
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
 	}
