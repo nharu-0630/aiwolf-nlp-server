@@ -96,6 +96,7 @@ func (client *WebSocketClient) handleRequest(received map[string]interface{}, in
 			}
 		case "INITIALIZE", "DAILY_INITIALIZE", "DAILY_FINISH":
 			*index = 0
+			return ""
 		case "FINISH":
 			return ""
 		default:
