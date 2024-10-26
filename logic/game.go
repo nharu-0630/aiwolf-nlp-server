@@ -43,7 +43,7 @@ func NewGame(settings model.Settings, conns []model.Connection) *Game {
 
 func (g *Game) Start() {
 	slog.Info("ゲームを開始します", "id", g.ID)
-	g.AnalysisService.TrackStartGame(g.ID)
+	g.AnalysisService.TrackStartGame(g.ID, g.Agents)
 	var winSide model.Team = model.T_NONE
 	for winSide == model.T_NONE && util.CalcHasErrorAgents(g.Agents) < int(float64(len(g.Agents))*config.MAX_HAS_ERROR_AGENTS_RATIO) {
 		g.progressDay()
@@ -59,8 +59,8 @@ func (g *Game) Start() {
 	}
 	g.requestToEveryone(model.R_FINISH)
 	g.closeAllAgents()
+	g.AnalysisService.TrackEndGame(winSide)
 	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
-	g.AnalysisService.TrackEndGame()
 }
 
 func (g *Game) progressDay() {

@@ -13,6 +13,7 @@ import (
 
 type Agent struct {
 	Idx        int             `json:"idx"`       // インデックス
+	Team       string          `json:"team"`      // チーム
 	Name       string          `json:"name"`      // 名前
 	Role       Role            `json:"role"`      // 役職
 	Connection *websocket.Conn `json:"-"`         // 接続
@@ -22,6 +23,7 @@ type Agent struct {
 func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
 	agent := &Agent{
 		Idx:        idx,
+		Team:       conn.Team,
 		Name:       conn.Name,
 		Role:       role,
 		Connection: conn.Conn,
