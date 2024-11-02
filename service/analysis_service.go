@@ -63,7 +63,6 @@ func (a *AnalysisServiceImpl) TrackEndGame(id string, winSide model.Team) {
 	if gameData, exists := a.gamesData[id]; exists {
 		gameData.winSide = winSide
 		a.saveGameData(id)
-		delete(a.gamesData, id)
 	}
 }
 

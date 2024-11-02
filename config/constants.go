@@ -7,10 +7,10 @@ const (
 	WEBSOCKET_EXTERNAL_HOST     = "0.0.0.0"                       // 外部接続を許可する場合
 	WEBSOCKET_PORT              = 8080                            // ポート番号
 	AGENT_COUNT_PER_GAME        = 5                               // 1ゲームあたりのエージェント数
-	MAX_TALK_COUNT_PER_AGENT    = 0                               // 1日あたりの1エージェントの最大発言回数
-	MAX_TALK_COUNT_PER_DAY      = 0                               // 1日あたりの全体の発言回数
-	MAX_WHISPER_COUNT_PER_AGENT = 0                               // 1日あたりの1エージェントの最大囁き回数
-	MAX_WHISPER_COUNT_PER_DAY   = 0                               // 1日あたりの全体の囁き回数
+	MAX_TALK_COUNT_PER_AGENT    = 3                               // 1日あたりの1エージェントの最大発言回数
+	MAX_TALK_COUNT_PER_DAY      = 15                              // 1日あたりの全体の発言回数
+	MAX_WHISPER_COUNT_PER_AGENT = 3                               // 1日あたりの1エージェントの最大囁き回数
+	MAX_WHISPER_COUNT_PER_DAY   = 15                              // 1日あたりの全体の囁き回数
 	MAX_SKIP_COUNT_PER_DAY      = 3                               // 1日あたりの最大スキップ回数
 	ALLOW_NO_ATTACK             = true                            // 襲撃なしの日を許可するか
 	VOTE_VISIBILITY             = false                           // 投票の結果を公開するか
