@@ -66,9 +66,9 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 	default:
 		return "", errors.New("一致するリクエストがありません")
 	}
-	g.AnalysisService.TrackStartRequest(*agent, packet)
+	g.AnalysisService.TrackStartRequest(g.ID, *agent, packet)
 	resp, err := agent.SendPacket(packet, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
-	g.AnalysisService.TrackEndRequest(*agent, resp, err)
+	g.AnalysisService.TrackEndRequest(g.ID, *agent, resp, err)
 	return resp, err
 }
 

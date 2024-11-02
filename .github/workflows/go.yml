@@ -17,8 +17,8 @@ jobs:
         run: go build -v ./...
       - name: Test with the Go CLI
         run: go test -v ./...
-      - name: Upload game JSON files
+      - name: Upload analysis results
         uses: actions/upload-artifact@v3
         with:
-          name: game-json-files
-          path: test/game_*.json
+          name: analysis-results
+          path: log/*.json

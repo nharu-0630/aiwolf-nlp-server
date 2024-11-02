@@ -3,11 +3,11 @@ package logic
 import (
 	"log/slog"
 
-	"github.com/dgryski/trifles/uuid"
 	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 	"github.com/nharu-0630/aiwolf-nlp-server/service"
 	"github.com/nharu-0630/aiwolf-nlp-server/util"
+	"github.com/oklog/ulid/v2"
 )
 
 type Game struct {
@@ -21,13 +21,12 @@ type Game struct {
 	AnalysisService   *service.AnalysisServiceImpl // 分析サービス
 }
 
-func NewGame(settings model.Settings, conns []model.Connection) *Game {
-	id := uuid.UUIDv4()
+func NewGame(settings model.Settings, conns []model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
+	id := ulid.Make().String()
 	agents := util.CreateAgents(conns, settings.RoleNumMap)
 	gameStatus := model.NewInitializeGameStatus(agents)
 	gameStatuses := make(map[int]*model.GameStatus)
 	gameStatuses[0] = &gameStatus
-	analysisService := service.NewAnalysisService()
 	slog.Info("ゲームを作成しました", "id", id)
 	return &Game{
 		ID:                id,
@@ -59,7 +58,7 @@ func (g *Game) Start() {
 	}
 	g.requestToEveryone(model.R_FINISH)
 	g.closeAllAgents()
-	g.AnalysisService.TrackEndGame(winSide)
+	g.AnalysisService.TrackEndGame(g.ID, winSide)
 	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
 }
 

@@ -10,15 +10,17 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/nharu-0630/aiwolf-nlp-server/logic"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
+	"github.com/nharu-0630/aiwolf-nlp-server/service"
 )
 
 type Server struct {
-	host        string
-	port        int
-	upgrader    websocket.Upgrader
-	waitingRoom *WaitingRoom
-	games       []*logic.Game
-	mu          sync.RWMutex
+	host            string
+	port            int
+	upgrader        websocket.Upgrader
+	waitingRoom     *WaitingRoom
+	games           []*logic.Game
+	mu              sync.RWMutex
+	analysisService *service.AnalysisServiceImpl
 }
 
 func NewServer(host string, port int) *Server {
@@ -30,8 +32,9 @@ func NewServer(host string, port int) *Server {
 				return true
 			},
 		},
-		waitingRoom: NewWaitingRoom(),
-		games:       make([]*logic.Game, 0),
+		waitingRoom:     NewWaitingRoom(),
+		games:           make([]*logic.Game, 0),
+		analysisService: service.NewAnalysisService(),
 	}
 }
 
@@ -91,7 +94,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	connections := s.waitingRoom.GetConnections()
-	game := logic.NewGame(gameSetting, connections)
+	game := logic.NewGame(gameSetting, connections, s.analysisService)
 
 	s.mu.Lock()
 	s.games = append(s.games, game)

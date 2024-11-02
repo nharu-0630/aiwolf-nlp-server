@@ -4,20 +4,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
 type AnalysisService interface {
-	TrackStartGame(id string)
-	TrackEndGame()
-	TrackStartRequest(agent model.Agent, request interface{})
-	TrackEndRequest(agent model.Agent, response interface{})
+	TrackStartGame(id string, agents []*model.Agent)
+	TrackEndGame(id string, winSide model.Team)
+	TrackStartRequest(id string, agent model.Agent, request interface{})
+	TrackEndRequest(id string, agent model.Agent, response interface{})
 }
 
 type AnalysisServiceImpl struct {
-	id           string
+	gamesData map[string]*GameData
+	outputDir string
+}
+
+type GameData struct {
 	agents       []interface{}
 	winSide      model.Team
 	entries      []interface{}
@@ -27,17 +33,21 @@ type AnalysisServiceImpl struct {
 
 func NewAnalysisService() *AnalysisServiceImpl {
 	return &AnalysisServiceImpl{
-		agents:       make([]interface{}, 0),
-		entries:      make([]interface{}, 0),
-		timestampMap: make(map[string]int64),
-		requestMap:   make(map[string]interface{}),
+		gamesData: make(map[string]*GameData),
+		outputDir: config.ANALYSIS_OUTPUT_DIR,
 	}
 }
 
 func (a *AnalysisServiceImpl) TrackStartGame(id string, agents []*model.Agent) {
-	a.id = id
+	gameData := &GameData{
+		agents:       make([]interface{}, 0),
+		entries:      make([]interface{}, 0),
+		timestampMap: make(map[string]int64),
+		requestMap:   make(map[string]interface{}),
+		winSide:      model.T_NONE,
+	}
 	for _, agent := range agents {
-		a.agents = append(a.agents,
+		gameData.agents = append(gameData.agents,
 			map[string]interface{}{
 				"idx":  agent.Idx,
 				"team": agent.Team,
@@ -46,50 +56,70 @@ func (a *AnalysisServiceImpl) TrackStartGame(id string, agents []*model.Agent) {
 			},
 		)
 	}
+	a.gamesData[id] = gameData
 }
 
-func (a *AnalysisServiceImpl) TrackEndGame(winSide model.Team) {
-	a.winSide = winSide
-	entry := map[string]interface{}{
-		"game_id":  a.id,
-		"win_side": a.winSide,
-		"agents":   a.agents,
-		"entries":  a.entries,
+func (a *AnalysisServiceImpl) TrackEndGame(id string, winSide model.Team) {
+	if gameData, exists := a.gamesData[id]; exists {
+		gameData.winSide = winSide
+		a.saveGameData(id)
+		delete(a.gamesData, id)
 	}
-	jsonData, err := json.Marshal(entry)
-	if err != nil {
-		return
-	}
-	file, err := os.Create(fmt.Sprintf("game_%s.json", a.id))
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	file.Write(jsonData)
 }
 
-func (a *AnalysisServiceImpl) TrackStartRequest(agent model.Agent, packet model.Packet) {
-	a.timestampMap[agent.Name] = time.Now().UnixNano()
-	a.requestMap[agent.Name] = packet
+func (a *AnalysisServiceImpl) TrackStartRequest(id string, agent model.Agent, packet model.Packet) {
+	if gameData, exists := a.gamesData[id]; exists {
+		gameData.timestampMap[agent.Name] = time.Now().UnixNano()
+		gameData.requestMap[agent.Name] = packet
+	}
 }
 
-func (a *AnalysisServiceImpl) TrackEndRequest(agent model.Agent, response string, err error) {
-	timestamp := time.Now().UnixNano()
-	entry := map[string]interface{}{
-		"agent":              agent.String(),
-		"request_timestamp":  a.timestampMap[agent.Name] / 1e6,
-		"response_timestamp": timestamp / 1e6,
+func (a *AnalysisServiceImpl) TrackEndRequest(id string, agent model.Agent, response string, err error) {
+	if gameData, exists := a.gamesData[id]; exists {
+		timestamp := time.Now().UnixNano()
+		entry := map[string]interface{}{
+			"agent":              agent.String(),
+			"request_timestamp":  gameData.timestampMap[agent.Name] / 1e6,
+			"response_timestamp": timestamp / 1e6,
+		}
+		if request, ok := gameData.requestMap[agent.Name]; ok {
+			entry["request"] = request
+		}
+		if response != "" {
+			entry["response"] = response
+		}
+		if err != nil {
+			entry["error"] = err
+		}
+		gameData.entries = append(gameData.entries, entry)
+		delete(gameData.timestampMap, agent.Name)
+		delete(gameData.requestMap, agent.Name)
+
+		a.saveGameData(id)
 	}
-	if request, ok := a.requestMap[agent.Name]; ok {
-		entry["request"] = request
+}
+
+func (a *AnalysisServiceImpl) saveGameData(id string) {
+	if gameData, exists := a.gamesData[id]; exists {
+		game := map[string]interface{}{
+			"game_id":  id,
+			"win_side": gameData.winSide,
+			"agents":   gameData.agents,
+			"entries":  gameData.entries,
+		}
+		jsonData, err := json.Marshal(game)
+		if err != nil {
+			return
+		}
+		if _, err := os.Stat(a.outputDir); os.IsNotExist(err) {
+			os.Mkdir(a.outputDir, 0755)
+		}
+		filePath := filepath.Join(a.outputDir, fmt.Sprintf("%s.json", id))
+		file, err := os.Create(filePath)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+		file.Write(jsonData)
 	}
-	if response != "" {
-		entry["response"] = response
-	}
-	if err != nil {
-		entry["error"] = err
-	}
-	a.entries = append(a.entries, entry)
-	delete(a.timestampMap, agent.Name)
-	delete(a.requestMap, agent.Name)
 }

@@ -20,4 +20,5 @@ const (
 	MAX_REVOTE_COUNT            = 1                               // 1位タイの場合の最大再投票回数
 	MAX_ATTACK_REVOTE_COUNT     = 1                               // 1位タイの場合の最大襲撃再投票回数
 	MAX_HAS_ERROR_AGENTS_RATIO  = 0.2                             // ゲームを継続するエラーエージェントの最大割合
+	ANALYSIS_OUTPUT_DIR         = "./../log"                      // 分析結果の出力ディレクトリ
 )
