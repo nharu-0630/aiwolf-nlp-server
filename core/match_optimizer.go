@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -20,17 +21,20 @@ func NewMatchOptimizer() *MatchOptimizer {
 		outputPath:   config.MATCH_OPTIMIZER_PATH,
 	}
 	mo.loadMatchHistory()
+	slog.Info("マッチオプティマイザを作成しました", "length", len(mo.matchHistory))
 	return mo
 }
 
 func (mo *MatchOptimizer) AddMatchHistory(match map[model.Role][]string) {
 	mo.matchHistory = append(mo.matchHistory, match)
+	slog.Info("マッチ履歴を追加しました", "length", len(mo.matchHistory))
 	mo.saveMatchHistory()
 }
 
 func (mo *MatchOptimizer) loadMatchHistory() {
 	file, err := os.Open(mo.outputPath)
 	if err != nil {
+		slog.Error("マッチ履歴の読み込みに失敗しました", "error", err)
 		return
 	}
 	defer file.Close()
@@ -38,6 +42,7 @@ func (mo *MatchOptimizer) loadMatchHistory() {
 	var loadedHistory []map[string][]string
 	err = decoder.Decode(&loadedHistory)
 	if err != nil {
+		slog.Error("マッチ履歴の読み込みに失敗しました", "error", err)
 		return
 	}
 	for _, match := range loadedHistory {
@@ -61,6 +66,7 @@ func (mo *MatchOptimizer) saveMatchHistory() {
 	}
 	jsonData, err := json.Marshal(convertedHistory)
 	if err != nil {
+		slog.Error("マッチ履歴の保存に失敗しました", "error", err)
 		return
 	}
 	dir := filepath.Dir(mo.outputPath)
@@ -69,6 +75,7 @@ func (mo *MatchOptimizer) saveMatchHistory() {
 	}
 	file, err := os.Create(mo.outputPath)
 	if err != nil {
+		slog.Error("マッチ履歴の保存に失敗しました", "error", err)
 		return
 	}
 	defer file.Close()
