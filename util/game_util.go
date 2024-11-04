@@ -111,3 +111,11 @@ func getMaxCountCandidates(counter map[*model.Agent]int) []*model.Agent {
 	}
 	return candidates
 }
+
+func GetRoleTeamNamesMap(agents []*model.Agent) map[model.Role][]string {
+	roleTeamNamesMap := make(map[model.Role][]string)
+	for _, a := range agents {
+		roleTeamNamesMap[a.Role] = append(roleTeamNamesMap[a.Role], a.Name)
+	}
+	return roleTeamNamesMap
+}

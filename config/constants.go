@@ -21,4 +21,5 @@ const (
 	MAX_ATTACK_REVOTE_COUNT     = 1                               // 1位タイの場合の最大襲撃再投票回数
 	MAX_HAS_ERROR_AGENTS_RATIO  = 0.2                             // ゲームを継続するエラーエージェントの最大割合
 	ANALYSIS_OUTPUT_DIR         = "./../log"                      // 分析結果の出力ディレクトリ
+	MATCH_OPTIMIZER_PATH        = "./../log/match_optimizer.json" // マッチ履歴の出力先
 )

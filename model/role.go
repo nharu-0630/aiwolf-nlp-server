@@ -1,6 +1,8 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Role struct {
 	Name    string  // 名前
@@ -38,6 +40,24 @@ func (r Role) String() string {
 
 func (r Role) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.String())
+}
+
+func RoleFromString(s string) Role {
+	switch s {
+	case "WEREWOLF":
+		return R_WEREWOLF
+	case "POSSESSED":
+		return R_POSSESSED
+	case "SEER":
+		return R_SEER
+	case "BODYGUARD":
+		return R_BODYGUARD
+	case "VILLAGER":
+		return R_VILLAGER
+	case "MEDIUM":
+		return R_MEDIUM
+	}
+	return Role{}
 }
 
 func Roles(num int) map[Role]int {

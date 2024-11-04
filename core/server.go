@@ -11,6 +11,7 @@ import (
 	"github.com/nharu-0630/aiwolf-nlp-server/logic"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 	"github.com/nharu-0630/aiwolf-nlp-server/service"
+	"github.com/nharu-0630/aiwolf-nlp-server/util"
 )
 
 type Server struct {
@@ -90,6 +91,9 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 
 	go func() {
-		game.Start()
+		winSide := game.Start()
+		if winSide != model.T_NONE {
+			s.matchOptimizer.AddMatchHistory(util.GetRoleTeamNamesMap(game.Agents))
+		}
 	}()
 }

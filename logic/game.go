@@ -59,7 +59,7 @@ func NewGameWithRole(settings model.Settings, roleMapConns map[model.Role][]mode
 	}
 }
 
-func (g *Game) Start() {
+func (g *Game) Start() model.Team {
 	slog.Info("ゲームを開始します", "id", g.ID)
 	g.AnalysisService.TrackStartGame(g.ID, g.Agents)
 	var winSide model.Team = model.T_NONE
@@ -74,11 +74,13 @@ func (g *Game) Start() {
 	}
 	if winSide == model.T_NONE {
 		slog.Warn("エラーが多発したため、ゲームを終了します", "id", g.ID)
+		return model.T_NONE
 	}
 	g.requestToEveryone(model.R_FINISH)
 	g.closeAllAgents()
 	g.AnalysisService.TrackEndGame(g.ID, winSide)
-	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)	
+	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
+	return winSide
 }
 
 func (g *Game) progressDay() {
