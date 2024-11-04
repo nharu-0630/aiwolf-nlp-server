@@ -40,6 +40,25 @@ func NewGame(settings model.Settings, conns []model.Connection, analysisService 
 	}
 }
 
+func NewGameWithRole(settings model.Settings, roleMapConns map[model.Role][]model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
+	id := ulid.Make().String()
+	agents := util.CreateAgentsWithRole(roleMapConns)
+	gameStatus := model.NewInitializeGameStatus(agents)
+	gameStatuses := make(map[int]*model.GameStatus)
+	gameStatuses[0] = &gameStatus
+	slog.Info("ゲームを作成しました", "id", id)
+	return &Game{
+		ID:                id,
+		Settings:          settings,
+		Agents:            agents,
+		CurrentDay:        0,
+		GameStatuses:      gameStatuses,
+		LastTalkIdxMap:    make(map[*model.Agent]int),
+		LastWhisperIdxMap: make(map[*model.Agent]int),
+		AnalysisService:   analysisService,
+	}
+}
+
 func (g *Game) Start() {
 	slog.Info("ゲームを開始します", "id", g.ID)
 	g.AnalysisService.TrackStartGame(g.ID, g.Agents)
@@ -59,7 +78,7 @@ func (g *Game) Start() {
 	g.requestToEveryone(model.R_FINISH)
 	g.closeAllAgents()
 	g.AnalysisService.TrackEndGame(g.ID, winSide)
-	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
+	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)	
 }
 
 func (g *Game) progressDay() {

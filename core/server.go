@@ -18,6 +18,7 @@ type Server struct {
 	port            int
 	upgrader        websocket.Upgrader
 	waitingRoom     *WaitingRoom
+	matchOptimizer  *MatchOptimizer
 	games           []*logic.Game
 	mu              sync.RWMutex
 	analysisService *service.AnalysisServiceImpl
@@ -35,6 +36,7 @@ func NewServer(host string, port int) *Server {
 			},
 		},
 		waitingRoom:     NewWaitingRoom(),
+		matchOptimizer:  NewMatchOptimizer(),
 		games:           make([]*logic.Game, 0),
 		analysisService: analysisService,
 		apiService:      service.NewApiService(analysisService),

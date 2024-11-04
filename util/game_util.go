@@ -62,6 +62,20 @@ func CreateAgents(conns []model.Connection, roles map[model.Role]int) []*model.A
 	return agents
 }
 
+func CreateAgentsWithRole(roleMapConns map[model.Role][]model.Connection) []*model.Agent {
+	agents := make([]*model.Agent, 0)
+	for role, conns := range roleMapConns {
+		for i, conn := range conns {
+			agent, err := model.NewAgent(i+1, role, conn)
+			if err != nil {
+				slog.Error("エージェントの作成に失敗しました", "error", err)
+			}
+			agents = append(agents, agent)
+		}
+	}
+	return agents
+}
+
 func assignRole(roles map[model.Role]int) model.Role {
 	for r, n := range roles {
 		if n > 0 {
