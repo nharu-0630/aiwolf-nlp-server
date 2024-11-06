@@ -15,13 +15,13 @@
 リクエストの種類は、`model/request.go` に定義されています。  
 - 名前リクエスト `NAME`
 - ゲーム開始リクエスト `INITIALIZE`
-- トークリクエスト `TALK`
+- 昼開始リクエスト `DAILY_INITIALIZE`
 - 囁きリクエスト `WHISPER`
+- トークリクエスト `TALK`
 - 投票リクエスト `VOTE`
 - 占いリクエスト `DIVINE`
 - 護衛リクエスト `GUARD`
 - 襲撃リクエスト `ATTACK`
-- 昼開始リクエスト `DAILY_INITIALIZE`
 - 昼終了リクエスト `DAILY_FINISH`
 - ゲーム終了リクエスト `FINISH`
 
@@ -96,3 +96,7 @@
     dummy_client.go:49: recv: {"request":"DAILY_INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"WEREWOLF"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":0,"SEER":1,"VILLAGER":3,"WEREWOLF":1},"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
 ```
 
+### 囁きリクエスト (WHISPER) / トークリクエスト (TALK)
+
+囁きリクエストとトークリクエストは、それぞれ囁きとトークが要求された際に送信されるリクエストです。  
+エージェントは、このリクエストを受信した際に、囁きやトークの自然言語の文字列を返す必要があります。
