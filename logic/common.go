@@ -60,10 +60,10 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER:
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
 		packet = model.Packet{Request: &request}
-		if talks != nil {
+		if request == model.R_TALK || request == model.R_DAILY_FINISH {
 			packet.TalkHistory = &talks
 		}
-		if whispers != nil {
+		if request == model.R_WHISPER || (request == model.R_DAILY_FINISH && agent.Role == model.R_WEREWOLF) {
 			packet.WhisperHistory = &whispers
 		}
 	case model.R_FINISH:
