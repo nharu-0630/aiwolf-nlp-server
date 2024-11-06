@@ -59,7 +59,7 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 		packet = model.Packet{Request: &request, Info: &info}
 	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER:
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
-		packet = model.Packet{Request: &request, TalkHistory: talks, WhisperHistory: whispers}
+		packet = model.Packet{Request: &request, TalkHistory: &talks, WhisperHistory: &whispers}
 	case model.R_FINISH:
 		info.RoleMap = util.GetRoleMap(g.Agents)
 		packet = model.Packet{Request: &request, Info: &info}
