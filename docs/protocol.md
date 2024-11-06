@@ -99,4 +99,39 @@
 ### 囁きリクエスト (WHISPER) / トークリクエスト (TALK)
 
 囁きリクエストとトークリクエストは、それぞれ囁きとトークが要求された際に送信されるリクエストです。  
-エージェントは、このリクエストを受信した際に、囁きやトークの自然言語の文字列を返す必要があります。
+エージェントは、このリクエストを受信した際に、囁きやトークの自然言語の文字列を返す必要があります。  
+サーバ側が送信する履歴は、前回のエージェントに対する送信の差分のみであり、全ての履歴を送信するわけではありません。
+
+**会話の履歴を示す情報 (talkHistory / whisperHistory)**
+- idx: 会話のインデックス
+- day: 会話が行われた日数
+- turn: 会話が行われたターン数
+- agent: 会話を行ったエージェント
+- text: 会話の内容
+
+```
+2024/11/06 06:41:47 INFO 発言フェーズを開始します id=01JC03ADVECM4H51QAMWC997E7 day=0
+2024/11/06 06:41:47 INFO パケットを送信しました agent=Agent[03] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc000122630 WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"TALK","talkHistory":[]}
+    dummy_client.go:68: send: 5dbdf1ef06e756c2e1f9309cc37b90b4
+2024/11/06 06:41:47 INFO レスポンスを受信しました agent=Agent[03] response=5dbdf1ef06e756c2e1f9309cc37b90b4
+2024/11/06 06:41:47 INFO 発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました id=01JC03ADVECM4H51QAMWC997E7 agent=Agent[03]
+2024/11/06 06:41:47 INFO 発言を受信しました id=01JC03ADVECM4H51QAMWC997E7 agent=Agent[03] text=5dbdf1ef06e756c2e1f9309cc37b90b4
+2024/11/06 06:41:47 INFO パケットを送信しました agent=Agent[04] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc000012228 WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[03]","text":"5dbdf1ef06e756c2e1f9309cc37b90b4"}]}
+    dummy_client.go:68: send: 3f9d747c94c51311c0ca66226d832d30
+2024/11/06 06:41:47 INFO レスポンスを受信しました agent=Agent[04] response=3f9d747c94c51311c0ca66226d832d30
+2024/11/06 06:41:47 INFO 発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました id=01JC03ADVECM4H51QAMWC997E7 agent=Agent[04]
+2024/11/06 06:41:47 INFO 発言を受信しました id=01JC03ADVECM4H51QAMWC997E7 agent=Agent[04] text=3f9d747c94c51311c0ca66226d832d30
+2024/11/06 06:41:47 INFO パケットを送信しました agent=Agent[02] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc0001226c0 WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[03]","text":"5dbdf1ef06e756c2e1f9309cc37b90b4"},{"idx":1,"day":0,"turn":0,"agent":"Agent[04]","text":"3f9d747c94c51311c0ca66226d832d30"}]}
+    dummy_client.go:68: send: 5315831399858025fae5d766c0f5196e
+2024/11/06 06:41:47 INFO レスポンスを受信しました agent=Agent[02] response=5315831399858025fae5d766c0f5196e
+2024/11/06 06:41:47 INFO 発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました id=01JC03ADVECM4H51QAMWC997E7 agent=Agent[02]
+2024/11/06 06:41:47 INFO 発言を受信しました id=01JC03ADVECM4H51QAMWC997E7 agent=Agent[02] text=5315831399858025fae5d766c0f5196e
+2024/11/06 06:41:47 INFO パケットを送信しました agent=Agent[05] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc0004b22e8 WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[03]","text":"5dbdf1ef06e756c2e1f9309cc37b90b4"},{"idx":1,"day":0,"turn":0,"agent":"Agent[04]","text":"3f9d747c94c51311c0ca66226d832d30"},{"idx":2,"day":0,"turn":0,"agent":"Agent[02]","text":"5315831399858025fae5d766c0f5196e"}]}
+    dummy_client.go:68: send: 4458a27ebf237f7a6608c8ae5a589a91
+2024/11/06 06:41:47 INFO レスポンスを受信しました agent=Agent[05] response=4458a27ebf237f7a6608c8ae5a589a91
+```
+
