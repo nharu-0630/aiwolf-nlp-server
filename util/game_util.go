@@ -50,9 +50,13 @@ func GetRoleMap(agents []*model.Agent) map[model.Agent]model.Role {
 }
 
 func CreateAgents(conns []model.Connection, roles map[model.Role]int) []*model.Agent {
+	rolesCopy := make(map[model.Role]int)
+	for role, count := range roles {
+		rolesCopy[role] = count
+	}
 	agents := make([]*model.Agent, 0)
 	for i, conn := range conns {
-		role := assignRole(roles)
+		role := assignRole(rolesCopy)
 		agent, err := model.NewAgent(i+1, role, conn)
 		if err != nil {
 			slog.Error("エージェントの作成に失敗しました", "error", err)
