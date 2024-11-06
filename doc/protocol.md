@@ -18,18 +18,18 @@
 - 昼開始リクエスト `DAILY_INITIALIZE`
 - 囁きリクエスト `WHISPER`
 - トークリクエスト `TALK`
-- 投票リクエスト `VOTE`
+- 昼終了リクエスト `DAILY_FINISH`
 - 占いリクエスト `DIVINE`
 - 護衛リクエスト `GUARD`
+- 投票リクエスト `VOTE`
 - 襲撃リクエスト `ATTACK`
-- 昼終了リクエスト `DAILY_FINISH`
 - ゲーム終了リクエスト `FINISH`
 
 リクエストの種類によって、リクエストに含まれる情報が異なり、レスポンスを返す必要があるかどうかも異なります。
 
 ### レスポンスの概要
 
-レスポンスは、トークや囁きリクエストに対してエージェントが発する自然言語を返す場合（例: `こんにちは`）と、投票や占いリクエストなどに対して対象のエージェントのインデックス付き文字列（例: `Agent[01]`）を返す２種類があります。
+レスポンスは、トークや囁きリクエストに対してエージェントが発する自然言語を返す場合 (例: `こんにちは`) と、投票や占いリクエストなどに対して対象のエージェントのインデックス付き文字列 (例: `Agent[01]`) を返す２種類があります。
 
 ## プロトコルの詳細
 
@@ -99,6 +99,7 @@
 ### 囁きリクエスト (WHISPER) / トークリクエスト (TALK)
 
 囁きリクエストとトークリクエストは、それぞれ囁きとトークが要求された際に送信されるリクエストです。  
+囁きリクエストについては、人狼の役職が2人以上生存している場合に、人狼 (`WEREWOLF`) のみに送信されます。  
 エージェントは、このリクエストを受信した際に、囁きやトークの自然言語の文字列を返す必要があります。  
 サーバ側が送信する履歴は、前回のエージェントに対する送信の差分のみであり、全ての履歴を送信するわけではありません。
 
@@ -135,3 +136,57 @@
 2024/11/06 06:41:47 INFO レスポンスを受信しました agent=Agent[05] response=4458a27ebf237f7a6608c8ae5a589a91
 ```
 
+### 昼終了リクエスト (DAILY_FINISH)
+
+昼終了リクエストは、昼が終了された際、つまりその日の夜が始まった際に送信されるリクエストです。  
+エージェントは、このリクエストを受信した際に、何も返す必要はありません。  
+直前までの会話の履歴が送信されます。  
+ゲーム全体の人狼の役職が2人未満で囁きフェーズが存在しない場合においても、人狼の役職に対しては、囁きの履歴 (`whisperHistory`) が送信されます。
+
+```
+2024/11/06 14:55:05 INFO パケットを送信しました agent=Agent[01] packet="{Request:DAILY_FINISH Info:<nil> Settings:<nil> TalkHistory:0xc00048e390 WhisperHistory:0xc00048e3a8}"
+    dummy_client.go:49: recv: {"request":"DAILY_FINISH","talkHistory":[{"idx":13,"day":0,"turn":2,"agent":"Agent[01]","text":"Over"},{"idx":14,"day":0,"turn":2,"agent":"Agent[04]","text":"Over"}],"whisperHistory":[]}
+```
+
+### 占いリクエスト (DIVINE)
+
+占いリクエストは、占いが要求された際に送信されるリクエストです。  
+占い師 (`SEER`) のみに送信されます。  
+エージェントは、このリクエストを受信した際に、占いの対象となるエージェントのインデックス付き文字列を返す必要があります。  
+
+> [!WARNING]
+> 下記のリクエスト例では、`info` 内に `talkList` が含まれていますが、削除される予定です。
+
+```
+2024/11/06 14:55:05 INFO パケットを送信しました agent=Agent[02] packet="{Request:DIVINE Info:0xc0002af6b0 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"DIVINE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[02]":"SEER"},"remainTalkMap":{"Agent[01]":0,"Agent[02]":0,"Agent[03]":0,"Agent[04]":0,"Agent[05]":0},"remainWhisperMap":{},"day":0,"agent":"Agent[02]","talkList":[{"idx":0,"day":0,"turn":0,"agent":"Agent[02]","text":"c6fcc2d3e3ce644aacfc424ec60ec514"},{"idx":1,"day":0,"turn":0,"agent":"Agent[05]","text":"4148eb46c5f1ed1c279a855bfc5ecb39"},{"idx":2,"day":0,"turn":0,"agent":"Agent[03]","text":"2eda40dd4f3c96e12e17834df4d0b9eb"},{"idx":3,"day":0,"turn":0,"agent":"Agent[01]","text":"726b712eb941cac9c8ada4056cad84bd"},{"idx":4,"day":0,"turn":0,"agent":"Agent[04]","text":"f36fbe999cea731323261d8bbbf9eb5b"},{"idx":5,"day":0,"turn":1,"agent":"Agent[02]","text":"171c1cfd36abbd51cec735ec12d3c71b"},{"idx":6,"day":0,"turn":1,"agent":"Agent[05]","text":"2dbc95b6c735f052bc73b4946db94018"},{"idx":7,"day":0,"turn":1,"agent":"Agent[03]","text":"1b306c22512c2e412cc0eb4cd685a136"},{"idx":8,"day":0,"turn":1,"agent":"Agent[01]","text":"d562fd0e9b397d0b896bcad2f81cb0cb"},{"idx":9,"day":0,"turn":1,"agent":"Agent[04]","text":"17a060c1204801816d45a464eb8bf9e1"},{"idx":10,"day":0,"turn":2,"agent":"Agent[02]","text":"Over"},{"idx":11,"day":0,"turn":2,"agent":"Agent[05]","text":"Over"},{"idx":12,"day":0,"turn":2,"agent":"Agent[03]","text":"Over"},{"idx":13,"day":0,"turn":2,"agent":"Agent[01]","text":"Over"},{"idx":14,"day":0,"turn":2,"agent":"Agent[04]","text":"Over"}]}}
+    dummy_client.go:68: send: Agent[01]
+2024/11/06 14:55:05 INFO レスポンスを受信しました agent=Agent[02] response=Agent[01]
+```
+
+### 護衛リクエスト (GUARD)
+
+護衛リクエストは、護衛が要求された際に送信されるリクエストです。  
+騎士 (`BODYGUARD`) のみに送信されます。
+エージェントは、このリクエストを受信した際に、護衛の対象となるエージェントのインデックス付き文字列を返す必要があります。  
+
+> [!WARNING]
+> リクエスト例は準備中です。
+
+### 投票リクエスト (VOTE)
+
+> [!WARNING]
+> 準備中です。
+
+### 襲撃リクエスト (ATTACK)
+
+> [!WARNING]
+> 準備中です。
+
+### ゲーム終了リクエスト (FINISH)
+
+ゲーム終了リクエストは、ゲームが終了された際に送信されるリクエストです。  
+エージェントは、このリクエストを受信した際に、何も返す必要はありません。  
+
+> [!WARNING]
+> リクエスト例は準備中です。
