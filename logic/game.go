@@ -62,6 +62,7 @@ func NewGameWithRole(settings model.Settings, roleMapConns map[model.Role][]mode
 func (g *Game) Start() model.Team {
 	slog.Info("ゲームを開始します", "id", g.ID)
 	g.AnalysisService.TrackStartGame(g.ID, g.Agents)
+	g.requestToEveryone(model.R_INITIALIZE)
 	var winSide model.Team = model.T_NONE
 	for winSide == model.T_NONE && util.CalcHasErrorAgents(g.Agents) < int(float64(len(g.Agents))*config.MAX_HAS_ERROR_AGENTS_RATIO) {
 		g.progressDay()
