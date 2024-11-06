@@ -201,6 +201,7 @@ func (g *Game) conductCommunication(request model.Request) {
 
 	if len(agents) < 2 {
 		slog.Warn("エージェント数が2未満のため、通信を行いません", "id", g.ID, "agentNum", len(agents))
+		return
 	}
 
 	rand.Shuffle(len(agents), func(i, j int) {
@@ -250,6 +251,9 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 		slog.Warn("リクエストの送受信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
 	g.GameStatuses[g.CurrentDay].RemainTalkMap[*agent]--
+	if _, exists := skipCountMap[agent]; !exists {
+		skipCountMap[agent] = 0
+	}
 	if text == model.T_SKIP {
 		skipCountMap[agent]++
 		if skipCountMap[agent] >= g.Settings.MaxSkip {
