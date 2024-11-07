@@ -2,6 +2,9 @@ web_socket:
   host: "127.0.0.1"
   port: 8080
 
+server:
+  self_match: false
+
 game:
   agent_count: 5
   vote_visibility: false

@@ -8,12 +8,16 @@ import (
 )
 
 type WaitingRoom struct {
+	agentCount  int
+	selfMatch   bool
 	connections map[string][]model.Connection
 	mu          sync.RWMutex
 }
 
-func NewWaitingRoom() *WaitingRoom {
+func NewWaitingRoom(config model.Config) *WaitingRoom {
 	return &WaitingRoom{
+		agentCount:  config.Game.AgentCount,
+		selfMatch:   config.Server.SelfMatch,
 		connections: make(map[string][]model.Connection),
 	}
 }
@@ -25,16 +29,36 @@ func (wr *WaitingRoom) AddConnection(team string, connection model.Connection) {
 	slog.Info("新しいクライアントが待機部屋に追加されました", "team", team, "remote_addr", connection.Conn.RemoteAddr().String())
 }
 
-func (wr *WaitingRoom) IsReady(agentCount int) bool {
+func (wr *WaitingRoom) IsReady() bool {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	return len(wr.connections) == agentCount
+	if wr.selfMatch {
+		for _, conns := range wr.connections {
+			if len(conns) >= wr.agentCount {
+				return true
+			}
+		}
+		return false
+	}
+	return len(wr.connections) == wr.agentCount
 }
 
 func (wr *WaitingRoom) GetConnections() []model.Connection {
 	wr.mu.Lock()
 	defer wr.mu.Unlock()
 	connections := []model.Connection{}
+	if wr.selfMatch {
+		for team, conns := range wr.connections {
+			if len(conns) >= wr.agentCount {
+				connections = append(connections, conns[:wr.agentCount]...)
+				wr.connections[team] = conns[wr.agentCount:]
+				if len(wr.connections[team]) == 0 {
+					delete(wr.connections, team)
+				}
+			}
+		}
+		return connections
+	}
 	for team, conns := range wr.connections {
 		connections = append(connections, conns[0])
 		wr.connections[team] = conns[1:]

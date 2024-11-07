@@ -40,7 +40,7 @@ func NewServer(config model.Config) *Server {
 				return true
 			},
 		},
-		waitingRoom:     NewWaitingRoom(),
+		waitingRoom:     NewWaitingRoom(config),
 		matchOptimizer:  NewMatchOptimizer(config),
 		gameSettings:    &gameSettings,
 		games:           make([]*logic.Game, 0),
@@ -81,7 +81,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	s.waitingRoom.AddConnection(connection.Team, *connection)
 
-	if !s.waitingRoom.IsReady(s.config.Game.AgentCount) {
+	if !s.waitingRoom.IsReady() {
 		return
 	}
 

@@ -14,6 +14,10 @@ type Config struct {
 		Port int    `yaml:"port"` // ポート番号
 	} `yaml:"web_socket"`
 
+	Server struct {
+		SelfMatch bool `yaml:"self_match"` // 同じチーム名のエージェント同士のみをマッチングさせるかどうか
+	} `yaml:"server"`
+
 	Game struct {
 		AgentCount             int     `yaml:"agent_count"`                // 1ゲームあたりのエージェント数
 		VoteVisibility         bool    `yaml:"vote_visibility"`            // 投票の結果を公開するか
