@@ -36,10 +36,10 @@
 各リクエストについて、実際の例を示しながら説明します。  
 リクエストには必ず `request` というキーが含まれ、その値がリクエストの種類を示します。  
 他のキーは、以下の通りです。
-- `info`: ゲームの現状態を示す情報
-- `setting`: ゲームの設定を示す情報
-- `talkHistory`: トークの履歴を示す情報
-- `whisperHistory`: 囁きの履歴を示す情報
+- info: ゲームの現状態を示す情報
+- setting: ゲームの設定を示す情報
+- talkHistory: トークの履歴を示す情報
+- whisperHistory: 囁きの履歴を示す情報
 
 ### ゲームの現状態を示す情報 (info)
 
@@ -72,7 +72,7 @@
 - maxRevote: 1位タイの場合の最大再投票回数
 - maxAttackRevote: 1位タイの場合の最大襲撃再投票回数
 
-### 会話の履歴を示す情報 (talkHistory / whisperHistory)**
+### 会話の履歴を示す情報 (talkHistory / whisperHistory)
 
 - idx: 会話のインデックス
 - day: 会話が行われた日数
