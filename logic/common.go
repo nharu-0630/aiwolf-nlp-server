@@ -24,13 +24,13 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 
 func (g *Game) getVotedCandidates(votes []model.Vote) []*model.Agent {
 	return util.GetCandidates(votes, func(vote model.Vote) bool {
-		return g.GameStatuses[g.CurrentDay].StatusMap[vote.Target] == model.S_ALIVE
+		return true
 	})
 }
 
 func (g *Game) getAttackVotedCandidates(votes []model.Vote) []*model.Agent {
 	return util.GetCandidates(votes, func(vote model.Vote) bool {
-		return g.GameStatuses[g.CurrentDay].StatusMap[vote.Target] == model.S_ALIVE && vote.Target.Role.Team != model.T_WEREWOLF
+		return vote.Target.Role.Team != model.T_WEREWOLF
 	})
 }
 
