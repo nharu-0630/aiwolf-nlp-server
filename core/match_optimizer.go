@@ -17,7 +17,7 @@ type MatchOptimizer struct {
 func NewMatchOptimizer(config model.Config) *MatchOptimizer {
 	mo := &MatchOptimizer{
 		matchHistory: make([]map[model.Role][]string, 0),
-		outputPath:   config.MatchOptimizerOutputPath,
+		outputPath:   config.MatchOptimizer.OutputPath,
 	}
 	mo.loadMatchHistory()
 	slog.Info("マッチオプティマイザを作成しました", "length", len(mo.matchHistory))

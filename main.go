@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-	config := model.DefaultConfig
-	server := core.NewServer(config)
+	config, err := model.LoadConfigFromFile("./config/default.yml")
+	if err != nil {
+		panic(err)
+	}
+	server := core.NewServer(*config)
 	server.Run()
 }

@@ -12,21 +12,24 @@ import (
 )
 
 func TestGame(t *testing.T) {
-	config := model.DefaultConfig
+	config, err := model.LoadConfigFromFile("../config/default.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 	if _, exists := os.LookupEnv("GITHUB_ACTIONS"); exists {
-		config.WebSocketHost = model.WebSocketExternalHost
+		config.WebSocket.Host = model.WebSocketExternalHost
 	}
 	go func() {
-		server := core.NewServer(config)
+		server := core.NewServer(*config)
 		server.Run()
 	}()
 
 	time.Sleep(5 * time.Second)
 
-	u := url.URL{Scheme: "ws", Host: config.WebSocketHost + ":" + strconv.Itoa(config.WebSocketPort), Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: config.WebSocket.Host + ":" + strconv.Itoa(config.WebSocket.Port), Path: "/ws"}
 	t.Logf("Connecting to %s", u.String())
 
-	clientsNum := config.AgentCount
+	clientsNum := config.Game.AgentCount
 	clients := make([]*DummyClient, clientsNum)
 	for i := 0; i < clientsNum; i++ {
 		client, err := NewDummyClient(u, t)

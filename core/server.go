@@ -58,8 +58,8 @@ func (s *Server) Run() {
 
 	s.apiService.RegisterRoutes(router)
 
-	slog.Info("サーバを起動しました", "host", s.config.WebSocketHost, "port", s.config.WebSocketPort)
-	err := router.Run(s.config.WebSocketHost + ":" + strconv.Itoa(s.config.WebSocketPort))
+	slog.Info("サーバを起動しました", "host", s.config.WebSocket.Host, "port", s.config.WebSocket.Port)
+	err := router.Run(s.config.WebSocket.Host + ":" + strconv.Itoa(s.config.WebSocket.Port))
 	if err != nil {
 		slog.Error("サーバの起動に失敗しました", "error", err)
 		return
@@ -79,7 +79,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	s.waitingRoom.AddConnection(connection.Team, *connection)
 
-	if !s.waitingRoom.IsReady(s.config.AgentCount) {
+	if !s.waitingRoom.IsReady(s.config.Game.AgentCount) {
 		return
 	}
 

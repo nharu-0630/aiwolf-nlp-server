@@ -22,24 +22,24 @@ type Settings struct {
 }
 
 func NewSettings(config Config) (Settings, error) {
-	roleNumMap := Roles(config.AgentCount)
+	roleNumMap := Roles(config.Game.AgentCount)
 	if roleNumMap == nil {
 		return Settings{}, errors.New("対応する役職の人数がありません")
 	}
 	settings := Settings{
 		RoleNumMap:       roleNumMap,
-		MaxTalk:          config.MaxTalkCountPerAgent,
-		MaxTalkTurn:      config.MaxTalkCountPerDay,
-		MaxWhisper:       config.MaxWhisperCountPerAgent,
-		MaxWhisperTurn:   config.MaxWhisperCountPerDay,
-		MaxSkip:          config.MaxSkipCount,
-		IsEnableNoAttack: config.AllowNoAttack,
-		IsVoteVisible:    config.VoteVisibility,
-		IsTalkOnFirstDay: config.TalkOnFirstDay,
-		ResponseTimeout:  int(config.ResponseTimeout.Milliseconds()),
-		ActionTimeout:    int(config.ActionTimeout.Milliseconds()),
-		MaxRevote:        config.MaxVoteCount,
-		MaxAttackRevote:  config.MaxAttackCount,
+		MaxTalk:          config.Game.Talk.MaxCount.PerAgent,
+		MaxTalkTurn:      config.Game.Talk.MaxCount.PerDay,
+		MaxWhisper:       config.Game.Whisper.MaxCount.PerAgent,
+		MaxWhisperTurn:   config.Game.Whisper.MaxCount.PerDay,
+		MaxSkip:          config.Game.Skip.MaxCount,
+		IsEnableNoAttack: config.Game.AllowNoAttack,
+		IsVoteVisible:    config.Game.VoteVisibility,
+		IsTalkOnFirstDay: config.Game.TalkOnFirstDay,
+		ResponseTimeout:  int(config.Game.Timeout.Response.Milliseconds()),
+		ActionTimeout:    int(config.Game.Timeout.Action.Milliseconds()),
+		MaxRevote:        config.Game.Vote.MaxCount,
+		MaxAttackRevote:  config.Game.Attack.MaxCount,
 	}
 	return settings, nil
 }

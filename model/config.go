@@ -9,47 +9,51 @@ import (
 )
 
 type Config struct {
-	WebSocketHost string `yaml:"web_socket.host"` // ホスト名
-	WebSocketPort int    `yaml:"web_socket.port"` // ポート番号
+	WebSocket struct {
+		Host string `yaml:"host"` // ホスト名
+		Port int    `yaml:"port"` // ポート番号
+	} `yaml:"web_socket"`
 
-	AgentCount              int           `yaml:"game.agent_count"`                 // 1ゲームあたりのエージェント数
-	AllowNoAttack           bool          `yaml:"game.allow_no_attack"`             // 襲撃なしの日を許可するか
-	VoteVisibility          bool          `yaml:"game.vote_visibility"`             // 投票の結果を公開するか
-	TalkOnFirstDay          bool          `yaml:"game.talk_on_first_day"`           // 1日目の発言を許可するか
-	MaxHasErrorAgentsRatio  float64       `yaml:"game.max_has_error_agents_ratio"`  // ゲームを継続するエラーエージェントの最大割合
-	MaxTalkCountPerAgent    int           `yaml:"game.talk.max_count.per_agent"`    // 1日あたりの1エージェントの最大発言回数
-	MaxTalkCountPerDay      int           `yaml:"game.talk.max_count.per_day"`      // 1日あたりの全体の発言回数
-	MaxWhisperCountPerAgent int           `yaml:"game.whisper.max_count.per_agent"` // 1日あたりの1エージェントの最大囁き回数
-	MaxWhisperCountPerDay   int           `yaml:"game.whisper.max_count.per_day"`   // 1日あたりの全体の囁き回数
-	MaxSkipCount            int           `yaml:"game.skip.max_count"`              // 1日あたりの1エージェントの最大スキップ回数
-	MaxVoteCount            int           `yaml:"game.vote.max_count"`              // 1位タイの場合の最大再投票回数
-	MaxAttackCount          int           `yaml:"game.attack.max_count"`            // 1位タイの場合の最大襲撃再投票回数
-	ActionTimeout           time.Duration `yaml:"game.timeout.action"`              // エージェントのアクションのタイムアウト時間
-	ResponseTimeout         time.Duration `yaml:"game.timeout.response"`            // エージェントの生存確認のタイムアウト時間
+	Game struct {
+		AgentCount             int     `yaml:"agent_count"`                // 1ゲームあたりのエージェント数
+		AllowNoAttack          bool    `yaml:"allow_no_attack"`            // 襲撃なしの日を許可するか
+		VoteVisibility         bool    `yaml:"vote_visibility"`            // 投票の結果を公開するか
+		TalkOnFirstDay         bool    `yaml:"talk_on_first_day"`          // 1日目の発言を許可するか
+		MaxHasErrorAgentsRatio float64 `yaml:"max_has_error_agents_ratio"` // ゲームを継続するエラーエージェントの最大割合
+		Talk                   struct {
+			MaxCount struct {
+				PerAgent int `yaml:"per_agent"` // 1日あたりの1エージェントの最大発言回数
+				PerDay   int `yaml:"per_day"`   // 1日あたりの全体の発言回数
+			} `yaml:"max_count"`
+		} `yaml:"talk"`
+		Whisper struct {
+			MaxCount struct {
+				PerAgent int `yaml:"per_agent"` // 1日あたりの1エージェントの最大囁き回数
+				PerDay   int `yaml:"per_day"`   // 1日あたりの全体の囁き回数
+			} `yaml:"max_count"`
+		} `yaml:"whisper"`
+		Skip struct {
+			MaxCount int `yaml:"max_count"` // 1日あたりの1エージェントの最大スキップ回数
+		} `yaml:"skip"`
+		Vote struct {
+			MaxCount int `yaml:"max_count"` // 1位タイの場合の最大再投票回数
+		} `yaml:"vote"`
+		Attack struct {
+			MaxCount int `yaml:"max_count"` // 1位タイの場合の最大襲撃再投票回数
+		} `yaml:"attack"`
+		Timeout struct {
+			Action   time.Duration `yaml:"action"`   // エージェントのアクションのタイムアウト時間
+			Response time.Duration `yaml:"response"` // エージェントの生存確認のタイムアウト時間
+		} `yaml:"timeout"`
+	} `yaml:"game"`
 
-	AnalysisServiceOutputDir string `yaml:"analysis_service.output_dir"` // 分析結果の出力ディレクトリ
-	MatchOptimizerOutputPath string `yaml:"match_optimizer.output_path"` // マッチ履歴の出力先
-}
+	AnalysisService struct {
+		OutputDir string `yaml:"output_dir"` // 分析結果の出力ディレクトリ
+	} `yaml:"analysis_service"`
 
-var DefaultConfig = Config{
-	WebSocketHost:            "127.0.0.1",
-	WebSocketPort:            8080,
-	AgentCount:               5,
-	MaxTalkCountPerAgent:     3,
-	MaxTalkCountPerDay:       15,
-	MaxWhisperCountPerAgent:  3,
-	MaxWhisperCountPerDay:    15,
-	MaxSkipCount:             3,
-	AllowNoAttack:            true,
-	VoteVisibility:           false,
-	TalkOnFirstDay:           true,
-	ActionTimeout:            time.Duration(60) * time.Second,
-	ResponseTimeout:          time.Duration(90) * time.Second,
-	MaxVoteCount:             1,
-	MaxAttackCount:           1,
-	MaxHasErrorAgentsRatio:   0.2,
-	AnalysisServiceOutputDir: "./../log",
-	MatchOptimizerOutputPath: "./../log/match_optimizer.json",
+	MatchOptimizer struct {
+		OutputPath string `yaml:"output_path"` // マッチ履歴の出力先
+	} `yaml:"match_optimizer"`
 }
 
 const WebSocketExternalHost = "0.0.0.0"

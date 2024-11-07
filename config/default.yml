@@ -1,0 +1,33 @@
+web_socket:
+  host: "127.0.0.1"
+  port: 8080
+
+game:
+  agent_count: 5
+  allow_no_attack: true
+  vote_visibility: false
+  talk_on_first_day: true
+  max_has_error_agents_ratio: 0.2
+  talk:
+    max_count:
+      per_agent: 3
+      per_day: 15
+  whisper:
+    max_count:
+      per_agent: 3
+      per_day: 15
+  skip:
+    max_count: 3
+  vote:
+    max_count: 1
+  attack:
+    max_count: 1
+  timeout:
+    action: 60s
+    response: 90s
+
+analysis_service:
+  output_dir: "./../log"
+
+match_optimizer:
+  output_path: "./../log/match_optimizer.json"

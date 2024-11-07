@@ -33,7 +33,7 @@ type GameData struct {
 func NewAnalysisService(config model.Config) *AnalysisServiceImpl {
 	return &AnalysisServiceImpl{
 		gamesData: make(map[string]*GameData),
-		outputDir: config.AnalysisServiceOutputDir,
+		outputDir: config.AnalysisService.OutputDir,
 	}
 }
 
