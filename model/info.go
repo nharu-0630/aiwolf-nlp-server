@@ -15,7 +15,7 @@ type Info struct {
 	WhisperList      []Talk           `json:"-"`                        // 囁きリスト
 	StatusMap        map[Agent]Status `json:"statusMap"`                // エージェントと生死の対応
 	RoleMap          map[Agent]Role   `json:"roleMap"`                  // エージェントと役職の対応
-	RemainTalkMap    map[Agent]int    `json:"remainTalkMap"`            // エージェントと残り発言回数の対応
+	RemainTalkMap    map[Agent]int    `json:"remainTalkMap"`            // エージェントと残りトーク回数の対応
 	RemainWhisperMap map[Agent]int    `json:"remainWhisperMap"`         // エージェントと残り囁き回数の対応
 }
 

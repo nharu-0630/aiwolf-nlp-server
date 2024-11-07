@@ -12,7 +12,7 @@ type GameStatus struct {
 	TalkList         []Talk           // 会話リスト
 	WhisperList      []Talk           // 囁きリスト
 	StatusMap        map[Agent]Status // エージェントと生存の対応
-	RemainTalkMap    map[Agent]int    // エージェントと残り発言回数の対応
+	RemainTalkMap    map[Agent]int    // エージェントと残りトーク回数の対応
 	RemainWhisperMap map[Agent]int    // エージェントと残り囁き回数の対応
 }
 
