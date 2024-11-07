@@ -1,8 +1,8 @@
-name: Go
+name: Test and Upload Analysis Results
 on: [push]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:

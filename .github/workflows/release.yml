@@ -1,0 +1,49 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+      - name: Install dependencies
+        run: go get .
+      - name: Build
+        run: go build -v ./...
+      - name: Test with the Go CLI
+        run: go test -v ./...
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build Multi Platform
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o dist/aiwolf-nlp-server-linux-amd64
+          GOOS=windows GOARCH=amd64 go build -o dist/aiwolf-nlp-server-windows-amd64.exe
+          GOOS=darwin GOARCH=amd64 go build -o dist/aiwolf-nlp-server-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -o dist/aiwolf-nlp-server-darwin-arm64
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/aiwolf-nlp-server-linux-amd64
+            dist/aiwolf-nlp-server-windows-amd64.exe
+            dist/aiwolf-nlp-server-darwin-amd64
+            dist/aiwolf-nlp-server-darwin-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
