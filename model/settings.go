@@ -33,7 +33,7 @@ func NewSettings(config Config) (Settings, error) {
 		MaxWhisper:       config.Game.Whisper.MaxCount.PerAgent,
 		MaxWhisperTurn:   config.Game.Whisper.MaxCount.PerDay,
 		MaxSkip:          config.Game.Skip.MaxCount,
-		IsEnableNoAttack: config.Game.AllowNoAttack,
+		IsEnableNoAttack: config.Game.Attack.AllowNoTarget,
 		IsVoteVisible:    config.Game.VoteVisibility,
 		IsTalkOnFirstDay: config.Game.TalkOnFirstDay,
 		ResponseTimeout:  int(config.Game.Timeout.Response.Milliseconds()),

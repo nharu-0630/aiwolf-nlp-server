@@ -4,7 +4,6 @@ web_socket:
 
 game:
   agent_count: 5
-  allow_no_attack: true
   vote_visibility: false
   talk_on_first_day: true
   max_has_error_agents_ratio: 0.2
@@ -22,12 +21,17 @@ game:
     max_count: 1
   attack:
     max_count: 1
+    allow_no_target: true
   timeout:
     action: 60s
     response: 90s
 
 analysis_service:
   output_dir: "./../log"
+
+api_service:
+  enable: true
+  publish_running_game: true
 
 match_optimizer:
   output_path: "./../log/match_optimizer.json"

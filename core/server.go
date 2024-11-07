@@ -45,7 +45,7 @@ func NewServer(config model.Config) *Server {
 		gameSettings:    &gameSettings,
 		games:           make([]*logic.Game, 0),
 		analysisService: analysisService,
-		apiService:      service.NewApiService(analysisService),
+		apiService:      service.NewApiService(analysisService, config),
 	}
 }
 
@@ -56,7 +56,9 @@ func (s *Server) Run() {
 		s.handleConnections(c.Writer, c.Request)
 	})
 
-	s.apiService.RegisterRoutes(router)
+	if s.config.ApiService.Enable {
+		s.apiService.RegisterRoutes(router)
+	}
 
 	slog.Info("サーバを起動しました", "host", s.config.WebSocket.Host, "port", s.config.WebSocket.Port)
 	err := router.Run(s.config.WebSocket.Host + ":" + strconv.Itoa(s.config.WebSocket.Port))

@@ -4,16 +4,19 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
 type ApiService struct {
-	analysisService *AnalysisServiceImpl
-	mu              sync.Mutex
+	analysisService    *AnalysisServiceImpl
+	publishRunningGame bool
+	mu                 sync.Mutex
 }
 
-func NewApiService(analysisService *AnalysisServiceImpl) *ApiService {
+func NewApiService(analysisService *AnalysisServiceImpl, config model.Config) *ApiService {
 	return &ApiService{
-		analysisService: analysisService,
+		analysisService:    analysisService,
+		publishRunningGame: config.ApiService.PublishRunningGame,
 	}
 }
 
@@ -46,6 +49,11 @@ func (api *ApiService) handleGameData(c *gin.Context) {
 	gameData, exists := api.analysisService.gamesData[gameID]
 	if !exists {
 		c.JSON(404, gin.H{"error": "game not found"})
+		return
+	}
+
+	if !api.publishRunningGame && !api.analysisService.endGameStatus[gameID] {
+		c.JSON(403, gin.H{"error": "game is running"})
 		return
 	}
 

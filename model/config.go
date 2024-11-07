@@ -16,7 +16,6 @@ type Config struct {
 
 	Game struct {
 		AgentCount             int     `yaml:"agent_count"`                // 1ゲームあたりのエージェント数
-		AllowNoAttack          bool    `yaml:"allow_no_attack"`            // 襲撃なしの日を許可するか
 		VoteVisibility         bool    `yaml:"vote_visibility"`            // 投票の結果を公開するか
 		TalkOnFirstDay         bool    `yaml:"talk_on_first_day"`          // 1日目の発言を許可するか
 		MaxHasErrorAgentsRatio float64 `yaml:"max_has_error_agents_ratio"` // ゲームを継続するエラーエージェントの最大割合
@@ -39,7 +38,8 @@ type Config struct {
 			MaxCount int `yaml:"max_count"` // 1位タイの場合の最大再投票回数
 		} `yaml:"vote"`
 		Attack struct {
-			MaxCount int `yaml:"max_count"` // 1位タイの場合の最大襲撃再投票回数
+			MaxCount      int  `yaml:"max_count"`       // 1位タイの場合の最大襲撃再投票回数
+			AllowNoTarget bool `yaml:"allow_no_target"` // 襲撃なしの日を許可するか
 		} `yaml:"attack"`
 		Timeout struct {
 			Action   time.Duration `yaml:"action"`   // エージェントのアクションのタイムアウト時間
@@ -50,6 +50,11 @@ type Config struct {
 	AnalysisService struct {
 		OutputDir string `yaml:"output_dir"` // 分析結果の出力ディレクトリ
 	} `yaml:"analysis_service"`
+
+	ApiService struct {
+		Enable             bool `yaml:"enable"`               // APIサービスの有効化
+		PublishRunningGame bool `yaml:"publish_running_game"` // 進行中のゲームを公開するか
+	} `yaml:"api_service"`
 
 	MatchOptimizer struct {
 		OutputPath string `yaml:"output_path"` // マッチ履歴の出力先

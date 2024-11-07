@@ -18,8 +18,9 @@ type AnalysisService interface {
 }
 
 type AnalysisServiceImpl struct {
-	gamesData map[string]*GameData
-	outputDir string
+	gamesData     map[string]*GameData
+	outputDir     string
+	endGameStatus map[string]bool
 }
 
 type GameData struct {
@@ -32,8 +33,9 @@ type GameData struct {
 
 func NewAnalysisService(config model.Config) *AnalysisServiceImpl {
 	return &AnalysisServiceImpl{
-		gamesData: make(map[string]*GameData),
-		outputDir: config.AnalysisService.OutputDir,
+		gamesData:     make(map[string]*GameData),
+		outputDir:     config.AnalysisService.OutputDir,
+		endGameStatus: make(map[string]bool),
 	}
 }
 
@@ -56,11 +58,13 @@ func (a *AnalysisServiceImpl) TrackStartGame(id string, agents []*model.Agent) {
 		)
 	}
 	a.gamesData[id] = gameData
+	a.endGameStatus[id] = false
 }
 
 func (a *AnalysisServiceImpl) TrackEndGame(id string, winSide model.Team) {
 	if gameData, exists := a.gamesData[id]; exists {
 		gameData.winSide = winSide
+		a.endGameStatus[id] = true
 		a.saveGameData(id)
 	}
 }
