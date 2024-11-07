@@ -57,12 +57,18 @@
 エージェントは、このリクエストを受信した際に、何も返す必要はありません。
 
 **ゲームの現状態を示す情報 (info)**
+- day: 現在の日数
+- agent: 自分のエージェントのインデックス付き文字列
+- mediumResult: 霊能者の結果 (エージェントの役職が霊媒師であるかつ霊能結果が設定されている場合のみ)
+- divineResult: 占い師の結果 (エージェントの役職が占い師であるかつ占い結果が設定されている場合のみ)
+- executedAgent: 昨日の追放結果 (エージェントが追放された場合のみ)
+- attackedAgent: 昨夜の襲撃結果 (エージェントが襲撃された場合のみ)
+- voteList: 投票の結果 (投票結果が公開されている場合のみ)
+- attackVoteList: 襲撃の投票結果 (エージェントの役職が人狼かつ襲撃投票結果が公開されている場合のみ)
 - statusMap: 各エージェントの生存状態を示すマップ
 - roleMap: 各エージェントの役職を示すマップ (自分以外のエージェントの役職は見えません)
 - remainTalkMap: 現リクエスト時における各エージェントの残り発言数を示すマップ
 - remainWhisperMap: 現リクエスト時における各エージェントの残り囁き数を示すマップ
-- day: 現在の日数
-- agent: 自分のエージェントインデックス
 
 **ゲームの設定を示す情報 (setting)**
 - roleNumMap: 各役職の人数を示すマップ
@@ -88,7 +94,9 @@
 
 昼開始リクエストは、昼が開始された際、つまり次の日が始まった際に送信されるリクエストです。  
 エージェントは、このリクエストを受信した際に、何も返す必要はありません。  
-各キーについては、ゲーム開始リクエストと同様です。
+
+**ゲームの現状態を示す情報 (info)**  
+**ゲームの設定を示す情報 (setting)**
 
 ```
 2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:DAILY_INITIALIZE Info:0xc0000b16b0 Settings:0xc0000ed020 TalkHistory:<nil> WhisperHistory:<nil>}"
@@ -128,6 +136,8 @@
 エージェントは、このリクエストを受信した際に、何も返す必要はありません。  
 直前までの会話の履歴が送信されます。  
 ゲーム全体の人狼の役職が2人未満で囁きフェーズが存在しない場合においても、人狼の役職に対しては、囁きの履歴が送信されます。
+
+**会話の履歴を示す情報 (talkHistory / whisperHistory)**
 
 ```
 2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[03] packet="{Request:DAILY_FINISH Info:<nil> Settings:<nil> TalkHistory:0xc0004b23f0 WhisperHistory:0xc0004b2408}"
@@ -180,6 +190,8 @@
 直前までの会話の履歴が送信されます。  
 ゲーム全体の人狼の役職が2人未満で囁きフェーズが存在しない場合においても、人狼の役職に対しては、囁きの履歴が送信されます。
 
+**会話の履歴を示す情報 (whisperHistory)**
+
 ```
 2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[03] packet="{Request:ATTACK Info:<nil> Settings:<nil> TalkHistory:<nil> WhisperHistory:0xc0004b2228}"
     dummy_client.go:50: recv: {"request":"ATTACK","whisperHistory":[]}
@@ -192,6 +204,9 @@
 ゲーム終了リクエストは、ゲームが終了された際に送信されるリクエストです。  
 エージェントは、このリクエストを受信した際に、何も返す必要はありません。  
 各キーについては、ゲーム開始リクエストと同様です。ゲーム開始リクエストとは異なり、 `setting` は送信されません。
+
+**ゲームの現状態を示す情報 (info)**  
+なお、`roleMap` は自分以外も含めたすべてのエージェントの役職が含まれます。
 
 ```
 2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:FINISH Info:0xc0000b1130 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"

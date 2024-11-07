@@ -11,8 +11,8 @@ type Info struct {
 	AttackedAgent    *Agent           `json:"attackedAgent,omitempty"`  // 襲撃されたエージェント
 	VoteList         []Vote           `json:"voteList,omitempty"`       // 投票リスト
 	AttackVoteList   []Vote           `json:"attackVoteList,omitempty"` // 襲撃投票リスト
-	TalkList         []Talk           `json:"talkList,omitempty"`       // 会話リスト
-	WhisperList      []Talk           `json:"whisperList,omitempty"`    // 囁きリスト
+	TalkList         []Talk           `json:"-"`                        // 会話リスト
+	WhisperList      []Talk           `json:"-"`                        // 囁きリスト
 	StatusMap        map[Agent]Status `json:"statusMap"`                // エージェントと生死の対応
 	RoleMap          map[Agent]Role   `json:"roleMap"`                  // エージェントと役職の対応
 	RemainTalkMap    map[Agent]int    `json:"remainTalkMap"`            // エージェントと残り発言回数の対応
