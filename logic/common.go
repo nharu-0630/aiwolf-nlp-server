@@ -93,12 +93,16 @@ func (g *Game) minimize(agent *model.Agent, talks []model.Talk, whispers []model
 
 func (g *Game) getAliveAgents() []*model.Agent {
 	return util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
-		return g.GameStatuses[g.CurrentDay].StatusMap[*agent] == model.S_ALIVE
+		return g.isAlive(agent)
 	})
 }
 
 func (g *Game) getAliveWerewolves() []*model.Agent {
 	return util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
-		return g.GameStatuses[g.CurrentDay].StatusMap[*agent] == model.S_ALIVE && agent.Role.Team == model.T_WEREWOLF
+		return g.isAlive(agent) && agent.Role.Team == model.T_WEREWOLF
 	})
+}
+
+func (g *Game) isAlive(agent *model.Agent) bool {
+	return g.GameStatuses[g.CurrentDay].StatusMap[*agent] == model.S_ALIVE
 }
