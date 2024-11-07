@@ -15,7 +15,7 @@ var (
 	R_POSSESSED = Role{Name: "POSSESSED", Team: T_WEREWOLF, Species: S_HUMAN}   // 狂人
 	R_SEER      = Role{Name: "SEER", Team: T_VILLAGER, Species: S_HUMAN}        // 占い師
 	R_BODYGUARD = Role{Name: "BODYGUARD", Team: T_VILLAGER, Species: S_HUMAN}   // 騎士
-	R_VILLAGER  = Role{Name: "VILLAGER", Team: T_VILLAGER, Species: S_HUMAN}    // 市民
+	R_VILLAGER  = Role{Name: "VILLAGER", Team: T_VILLAGER, Species: S_HUMAN}    // 村人
 	R_MEDIUM    = Role{Name: "MEDIUM", Team: T_VILLAGER, Species: S_HUMAN}      // 霊媒師
 )
 
