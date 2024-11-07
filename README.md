@@ -16,5 +16,5 @@
 以下のコマンドを実行してください。  
 
 ```bash
-./aiwolf-nlp-server default.yml
+./aiwolf-nlp-server -c default.yml
 ```

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/kano-lab/aiwolf-nlp-server/core"
@@ -8,11 +9,18 @@ import (
 )
 
 func main() {
-	configPath := "./config/default.yml"
-	if len(os.Args) > 1 {
-		configPath = os.Args[1]
+	var (
+		configPath = flag.String("c", "./default.yml", "設定ファイルのパス")
+		help       = flag.Bool("h", false, "ヘルプを表示")
+	)
+	flag.Parse()
+
+	if *help {
+		flag.Usage()
+		os.Exit(0)
 	}
-	config, err := model.LoadConfigFromFile(configPath)
+
+	config, err := model.LoadConfigFromPath(*configPath)
 	if err != nil {
 		panic(err)
 	}

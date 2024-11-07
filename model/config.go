@@ -67,8 +67,8 @@ type Config struct {
 
 const WebSocketExternalHost = "0.0.0.0"
 
-func LoadConfigFromFile(filePath string) (*Config, error) {
-	data, err := os.ReadFile(filePath)
+func LoadConfigFromPath(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		slog.Error("設定ファイルの読み込みに失敗しました", "error", err)
 		return nil, err
