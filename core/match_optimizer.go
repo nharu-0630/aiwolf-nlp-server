@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
 type MatchOptimizer struct {

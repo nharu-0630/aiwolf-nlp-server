@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
 type ApiService struct {

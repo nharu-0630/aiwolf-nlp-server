@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"math/rand"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
 func SelectRandomAgent(agents []*model.Agent) *model.Agent {

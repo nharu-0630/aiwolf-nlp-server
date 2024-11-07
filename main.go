@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/core"
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/core"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
 func main() {

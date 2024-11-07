@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
-	"github.com/nharu-0630/aiwolf-nlp-server/util"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/util"
 )
 
 func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*model.Agent, error) {

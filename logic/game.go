@@ -3,9 +3,9 @@ package logic
 import (
 	"log/slog"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
-	"github.com/nharu-0630/aiwolf-nlp-server/service"
-	"github.com/nharu-0630/aiwolf-nlp-server/util"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/service"
+	"github.com/kano-lab/aiwolf-nlp-server/util"
 	"github.com/oklog/ulid/v2"
 )
 

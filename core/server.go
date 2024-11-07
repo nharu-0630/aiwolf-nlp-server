@@ -8,10 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/nharu-0630/aiwolf-nlp-server/logic"
-	"github.com/nharu-0630/aiwolf-nlp-server/model"
-	"github.com/nharu-0630/aiwolf-nlp-server/service"
-	"github.com/nharu-0630/aiwolf-nlp-server/util"
+	"github.com/kano-lab/aiwolf-nlp-server/logic"
+	"github.com/kano-lab/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/service"
+	"github.com/kano-lab/aiwolf-nlp-server/util"
 )
 
 type Server struct {
