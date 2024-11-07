@@ -152,7 +152,7 @@
 
 占いリクエストは、占いが要求された際に送信されるリクエストです。  
 占い師 (`SEER`) のみに送信されます。  
-エージェントは、このリクエストを受信した際に、占いの対象となるエージェントのインデックス付き文字列を返す必要があります。  
+エージェントは、このリクエストを受信した際に、占いの対象となるエージェントのインデックス付き文字列を返す必要があります。
 
 > [!WARNING]
 > 下記のリクエスト例では、`info` 内に `talkList` が含まれていますが、削除される予定です。
@@ -168,25 +168,63 @@
 
 護衛リクエストは、護衛が要求された際に送信されるリクエストです。  
 騎士 (`BODYGUARD`) のみに送信されます。
-エージェントは、このリクエストを受信した際に、護衛の対象となるエージェントのインデックス付き文字列を返す必要があります。  
+エージェントは、このリクエストを受信した際に、護衛の対象となるエージェントのインデックス付き文字列を返す必要があります。
 
 > [!WARNING]
-> リクエスト例は準備中です。
+> 下記のリクエスト例では、`info` 内に `talkList` が含まれていますが、削除される予定です。
+
+```
+2024/11/07 02:55:47 INFO パケットを送信しました agent=Agent[01] packet="{Request:GUARD Info:0xc00033edc0 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"GUARD","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"BODYGUARD"},"remainTalkMap":{"Agent[01]":0,"Agent[02]":0,"Agent[03]":0,"Agent[04]":0,"Agent[05]":0},"remainWhisperMap":{},"day":1,"agent":"Agent[01]","talkList":[{"idx":0,"day":1,"turn":0,"agent":"Agent[05]","text":"7cc13d2972f5e2a7c8969ee723ce88c4"},{"idx":1,"day":1,"turn":0,"agent":"Agent[02]","text":"b42dcbc57089bea4638a91d5cc05748a"},{"idx":2,"day":1,"turn":0,"agent":"Agent[04]","text":"6573c92c1be5b20d7569ab71f1e86417"},{"idx":3,"day":1,"turn":0,"agent":"Agent[01]","text":"6b80bc3bcc97509152e9fa8718ba63fe"},{"idx":4,"day":1,"turn":0,"agent":"Agent[03]","text":"8d0edc5a648bda1e727ae8377e07ee7b"},{"idx":5,"day":1,"turn":1,"agent":"Agent[05]","text":"456f740a91a45562ce04b522aa544b93"},{"idx":6,"day":1,"turn":1,"agent":"Agent[02]","text":"ac437b239eb530e47234a13331cc7c64"},{"idx":7,"day":1,"turn":1,"agent":"Agent[04]"
+    dummy_client.go:68: send: Agent[02]
+2024/11/07 02:55:47 INFO レスポンスを受信しました agent=Agent[01] response=Agent[02]
+```
+
+テストのログ出力の仕様により、リクエスト例の文字列が途切れていますが、実際のリクエストは以下のようになります。
+
+```
+{"request":"GUARD","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[03]":"BODYGUARD"},"remainTalkMap":{"Agent[01]":0,"Agent[02]":0,"Agent[03]":0,"Agent[04]":0,"Agent[05]":0},"remainWhisperMap":{},"day":1,"agent":"Agent[03]","talkList":[{"idx":0,"day":1,"turn":0,"agent":"Agent[03]","text":"52489609be6aeda2f583c7328b21f983"},{"idx":1,"day":1,"turn":0,"agent":"Agent[04]","text":"e1a38d894a24ee9db735c7abcc82495b"},{"idx":2,"day":1,"turn":0,"agent":"Agent[02]","text":"22f7930001d6b0ea2400d05e198fa7b5"},{"idx":3,"day":1,"turn":0,"agent":"Agent[01]","text":"0b76445d4c2c0dbe639a058cd651007d"},{"idx":4,"day":1,"turn":0,"agent":"Agent[05]","text":"8bde19e1b8c0d1ff510531308827583e"},{"idx":5,"day":1,"turn":1,"agent":"Agent[03]","text":"32b1d92a6671f043548c3725bb00c1f6"},{"idx":6,"day":1,"turn":1,"agent":"Agent[04]","text":"641743ee5d1988731759e7ec546c21d1"},{"idx":7,"day":1,"turn":1,"agent":"Agent[02]","text":"3914eb8c0c45e2fc9321a7248a9ad9a3"},{"idx":8,"day":1,"turn":1,"agent":"Agent[01]","text":"36414701fb89403b38c2eb13fef57e55"},{"idx":9,"day":1,"turn":1,"agent":"Agent[05]","text":"782c9839bced0e1248a79d96a8b64d95"},{"idx":10,"day":1,"turn":2,"agent":"Agent[03]","text":"Over"},{"idx":11,"day":1,"turn":2,"agent":"Agent[04]","text":"Over"},{"idx":12,"day":1,"turn":2,"agent":"Agent[02]","text":"Over"},{"idx":13,"day":1,"turn":2,"agent":"Agent[01]","text":"Over"},{"idx":14,"day":1,"turn":2,"agent":"Agent[05]","text":"Over"}]}}
+```
 
 ### 投票リクエスト (VOTE)
 
+投票リクエストは、追放するエージェントを投票する際に送信されるリクエストです。  
+エージェントは、このリクエストを受信した際に、投票の対象となるエージェントのインデックス付き文字列を返す必要があります。
+
 > [!WARNING]
-> 準備中です。
+> 下記のリクエスト例では、`info` 内に `talkList` が含まれていますが、削除される予定です。
+
+```
+2024/11/07 02:55:47 INFO パケットを送信しました agent=Agent[01] packet="{Request:VOTE Info:0xc0002af290 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"VOTE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"BODYGUARD"},"remainTalkMap":{"Agent[01]":0,"Agent[02]":0,"Agent[03]":0,"Agent[04]":0,"Agent[05]":0},"remainWhisperMap":{},"day":1,"agent":"Agent[01]","talkList":[{"idx":0,"day":1,"turn":0,"agent":"Agent[05]","text":"7cc13d2972f5e2a7c8969ee723ce88c4"},{"idx":1,"day":1,"turn":0,"agent":"Agent[02]","text":"b42dcbc57089bea4638a91d5cc05748a"},{"idx":2,"day":1,"turn":0,"agent":"Agent[04]","text":"6573c92c1be5b20d7569ab71f1e86417"},{"idx":3,"day":1,"turn":0,"agent":"Agent[01]","text":"6b80bc3bcc97509152e9fa8718ba63fe"},{"idx":4,"day":1,"turn":0,"agent":"Agent[03]","text":"8d0edc5a648bda1e727ae8377e07ee7b"},{"idx":5,"day":1,"turn":1,"agent":"Agent[05]","text":"456f740a91a45562ce04b522aa544b93"},{"idx":6,"day":1,"turn":1,"agent":"Agent[02]","text":"ac437b239eb530e47234a13331cc7c64"},{"idx":7,"day":1,"turn":1,"agent":"Agent[04]"
+    dummy_client.go:68: send: Agent[01]
+2024/11/07 02:55:47 INFO レスポンスを受信しました agent=Agent[01] response=Agent[01]
+```
+
+リクエスト例の文字列が途切れていますが、護衛リクエスト同様にテストのログ出力の仕様によりなります。
 
 ### 襲撃リクエスト (ATTACK)
 
-> [!WARNING]
-> 準備中です。
+襲撃リクエストは、襲撃するエージェントを投票する際に送信されるリクエストです。  
+人狼 (`WEREWOLF`) のみに送信されます。  
+エージェントは、このリクエストを受信した際に、襲撃の対象となるエージェントのインデックス付き文字列を返す必要があります。
+
+```
+2024/11/07 02:55:47 INFO パケットを送信しました agent=Agent[03] packet="{Request:ATTACK Info:0xc00038ed10 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"ATTACK","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[03]":"WEREWOLF"},"remainTalkMap":{"Agent[01]":0,"Agent[02]":0,"Agent[03]":0,"Agent[04]":0,"Agent[05]":0},"remainWhisperMap":{"Agent[01]":0,"Agent[02]":0,"Agent[03]":15,"Agent[04]":0,"Agent[05]":0},"day":1,"agent":"Agent[03]","talkList":[{"idx":0,"day":1,"turn":0,"agent":"Agent[05]","text":"7cc13d2972f5e2a7c8969ee723ce88c4"},{"idx":1,"day":1,"turn":0,"agent":"Agent[02]","text":"b42dcbc57089bea4638a91d5cc05748a"},{"idx":2,"day":1,"turn":0,"agent":"Agent[04]","text":"6573c92c1be5b20d7569ab71f1e86417"},{"idx":3,"day":1,"turn":0,"agent":"Agent[01]","text":"6b80bc3bcc97509152e9fa8718ba63fe"},{"idx":4,"day":1,"turn":0,"agent":"Agent[03]","text":"8d0edc5a648bda1e727ae8377e07ee7b"},{"idx":5,"day":1,"turn":1,"agent":"Agent[05]","text":"456f740a91a45562ce04b522aa544b93"},{"idx":6,"day":1,"turn":1,"agent":"Agent[02]","text":"ac437b239e
+    dummy_client.go:68: send: Agent[02]
+2024/11/07 02:55:47 INFO レスポンスを受信しました agent=Agent[03] response=Agent[02]
+```
+
+リクエスト例の文字列が途切れていますが、護衛リクエスト同様にテストのログ出力の仕様によりなります。
 
 ### ゲーム終了リクエスト (FINISH)
 
 ゲーム終了リクエストは、ゲームが終了された際に送信されるリクエストです。  
 エージェントは、このリクエストを受信した際に、何も返す必要はありません。  
+各キーについては、ゲーム開始リクエストと同様です。ゲーム開始リクエストとは異なり、`setting` は送信されません。
 
-> [!WARNING]
-> リクエスト例は準備中です。
+```
+2024/11/07 02:55:47 INFO パケットを送信しました agent=Agent[01] packet="{Request:FINISH Info:0xc000537970 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:49: recv: {"request":"FINISH","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"DEAD","Agent[03]":"DEAD","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"BODYGUARD","Agent[02]":"SEER","Agent[03]":"WEREWOLF","Agent[04]":"VILLAGER","Agent[05]":"VILLAGER"},"remainTalkMap":{},"remainWhisperMap":{},"day":3,"agent":"Agent[01]","executedAgent":"Agent[03]"}}
+```
