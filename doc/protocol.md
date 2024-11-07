@@ -33,28 +33,13 @@
 
 ## プロトコルの詳細
 
-各リクエストについて、実際の例を示しながら説明します。
-
-### 名前リクエスト (NAME)
-
-名前リクエストは、エージェントがサーバに接続した際に送信されるリクエストです。  
-エージェントは、このリクエストを受信した際に、自身の名前を返す必要があります。  
-複数エージェントを接続する場合、後ろにユニークな数字をつける必要があります。  
-例えば、 `dpetektq` という名前を返す場合、 `dpetektq1`, `dpetektq2` などとします。  
-後ろの数字を除いた名前は、エージェントのチーム名として扱われます。
-
-```
-2024/11/07 06:42:27 INFO NAMEパケットを送信しました remote_addr=127.0.0.1:36266
-    dummy_client.go:50: recv: {"request":"NAME"}
-    dummy_client.go:69: send: dpetektq
-2024/11/07 06:42:27 INFO クライアントが接続しました team=dpetektq name=dpetektq remote_addr=127.0.0.1:36266
-2024/11/07 06:42:27 INFO 新しいクライアントが待機部屋に追加されました team=dpetektq remote_addr=127.0.0.1:36266
-```
-
-### ゲーム開始リクエスト (INITIALIZE)
-
-ゲーム開始リクエストは、ゲームが開始された際に送信されるリクエストです。  
-エージェントは、このリクエストを受信した際に、何も返す必要はありません。
+各リクエストについて、実際の例を示しながら説明します。  
+リクエストには必ず `request` というキーが含まれ、その値がリクエストの種類を示します。  
+他のキーは、以下の通りです。
+- `info`: ゲームの現状態を示す情報
+- `setting`: ゲームの設定を示す情報
+- `talkHistory`: トークの履歴を示す情報
+- `whisperHistory`: 囁きの履歴を示す情報
 
 **ゲームの現状態を示す情報 (info)**
 - day: 現在の日数
@@ -85,6 +70,39 @@
 - maxRevote: 1位タイの場合の最大再投票回数
 - maxAttackRevote: 1位タイの場合の最大襲撃再投票回数
 
+**会話の履歴を示す情報 (talkHistory / whisperHistory)**
+- idx: 会話のインデックス
+- day: 会話が行われた日数
+- turn: 会話が行われたターン数
+- agent: 会話を行ったエージェント
+- text: 会話の内容
+
+リクエストの種類ごとの詳細な説明を以下に示します。
+
+### 名前リクエスト (NAME)
+
+名前リクエストは、エージェントがサーバに接続した際に送信されるリクエストです。  
+エージェントは、このリクエストを受信した際に、自身の名前を返す必要があります。  
+複数エージェントを接続する場合、後ろにユニークな数字をつける必要があります。  
+例えば、 `dpetektq` という名前を返す場合、 `dpetektq1`, `dpetektq2` などとします。  
+後ろの数字を除いた名前は、エージェントのチーム名として扱われます。
+
+```
+2024/11/07 06:42:27 INFO NAMEパケットを送信しました remote_addr=127.0.0.1:36266
+    dummy_client.go:50: recv: {"request":"NAME"}
+    dummy_client.go:69: send: dpetektq
+2024/11/07 06:42:27 INFO クライアントが接続しました team=dpetektq name=dpetektq remote_addr=127.0.0.1:36266
+2024/11/07 06:42:27 INFO 新しいクライアントが待機部屋に追加されました team=dpetektq remote_addr=127.0.0.1:36266
+```
+
+### ゲーム開始リクエスト (INITIALIZE)
+
+ゲーム開始リクエストは、ゲームが開始された際に送信されるリクエストです。  
+エージェントは、このリクエストを受信した際に、何も返す必要はありません。
+
+**ゲームの現状態を示す情報 (info)**  
+**ゲームの設定を示す情報 (setting)**
+
 ```
 2024/11/06 05:22:04 INFO パケットを送信しました agent=Agent[02] packet="{Request:INITIALIZE Info:0xc000184210 Settings:0xc0000b0430 TalkHistory:[] WhisperHistory:[]}"
     dummy_client.go:49: recv: {"request":"INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[02]":"SEER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[02]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":0,"SEER":1,"VILLAGER":3,"WEREWOLF":1},"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
@@ -110,12 +128,8 @@
 エージェントは、このリクエストを受信した際に、囁きやトークの自然言語の文字列を返す必要があります。  
 サーバ側が送信する履歴は、前回のエージェントに対する送信の差分のみであり、全ての履歴を送信するわけではありません。
 
-**会話の履歴を示す情報 (talkHistory / whisperHistory)**
-- idx: 会話のインデックス
-- day: 会話が行われた日数
-- turn: 会話が行われたターン数
-- agent: 会話を行ったエージェント
-- text: 会話の内容
+**トークの履歴を示す情報 (talkHistory)**  
+**囁きの履歴を示す情報 (whisperHistory)**
 
 ```
 2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc000528138 WhisperHistory:<nil>}"
@@ -137,7 +151,8 @@
 直前までの会話の履歴が送信されます。  
 ゲーム全体の人狼の役職が2人未満で囁きフェーズが存在しない場合においても、人狼の役職に対しては、囁きの履歴が送信されます。
 
-**会話の履歴を示す情報 (talkHistory / whisperHistory)**
+**トークの履歴を示す情報 (talkHistory)**  
+**囁きの履歴を示す情報 (whisperHistory)**
 
 ```
 2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[03] packet="{Request:DAILY_FINISH Info:<nil> Settings:<nil> TalkHistory:0xc0004b23f0 WhisperHistory:0xc0004b2408}"
