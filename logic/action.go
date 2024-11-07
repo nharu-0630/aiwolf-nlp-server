@@ -28,18 +28,13 @@ func (g *Game) doExecution() {
 		g.GameStatuses[g.CurrentDay].ExecutedAgent = executed
 		slog.Info("追放結果を設定しました", "id", g.ID, "agent", executed.Name)
 
-		mediums := util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
-			return agent.Role == model.R_MEDIUM
-		})
-		if len(mediums) > 0 {
-			g.GameStatuses[g.CurrentDay].MediumResult = &model.Judge{
-				Day:    g.GameStatuses[g.CurrentDay].Day,
-				Agent:  *mediums[0],
-				Target: *executed,
-				Result: executed.Role.Species,
-			}
-			slog.Info("霊能結果を設定しました", "id", g.ID, "target", executed.String(), "result", executed.Role.Species)
+		g.GameStatuses[g.CurrentDay].MediumResult = &model.Judge{
+			Day:    g.GameStatuses[g.CurrentDay].Day,
+			Agent:  *executed,
+			Target: *executed,
+			Result: executed.Role.Species,
 		}
+		slog.Info("霊能結果を設定しました", "id", g.ID, "target", executed.String(), "result", executed.Role.Species)
 	} else {
 		slog.Warn("追放対象がいないため、追放結果を設定しません", "id", g.ID)
 	}
@@ -70,7 +65,6 @@ func (g *Game) doAttack() {
 }
 
 func (g *Game) conductAttackVote() *model.Agent {
-	slog.Info("襲撃投票を開始します", "id", g.ID, "day", g.CurrentDay)
 	var attacked *model.Agent
 	for i := 0; i < g.Settings.MaxAttackRevote; i++ {
 		g.executeAttackVote()
@@ -93,8 +87,9 @@ func (g *Game) isGuarded(attacked *model.Agent) bool {
 func (g *Game) doDivine() {
 	slog.Info("占いフェーズを開始します", "id", g.ID, "day", g.CurrentDay)
 	for _, agent := range g.getAliveAgents() {
-		if agent.Role == model.R_SEER && g.GameStatuses[g.CurrentDay].ExecutedAgent != agent {
+		if agent.Role == model.R_SEER {
 			g.conductDivination(agent)
+			break
 		}
 	}
 	slog.Info("占いフェーズを終了します", "id", g.ID, "day", g.CurrentDay)
@@ -104,13 +99,17 @@ func (g *Game) conductDivination(agent *model.Agent) {
 	slog.Info("占いアクションを開始します", "id", g.ID, "agent", agent.String())
 	target, err := g.findTargetByRequest(agent, model.R_DIVINE)
 	if err == nil {
-		g.GameStatuses[g.CurrentDay].DivineResult = &model.Judge{
-			Day:    g.GameStatuses[g.CurrentDay].Day,
-			Agent:  *agent,
-			Target: *target,
-			Result: target.Role.Species,
+		if g.isAlive(target) {
+			g.GameStatuses[g.CurrentDay].DivineResult = &model.Judge{
+				Day:    g.GameStatuses[g.CurrentDay].Day,
+				Agent:  *agent,
+				Target: *target,
+				Result: target.Role.Species,
+			}
+			slog.Info("占い結果を設定しました", "id", g.ID, "target", target.String(), "result", target.Role.Species)
+		} else {
+			slog.Warn("占い対象が死亡しているため、占い結果を設定しません", "id", g.ID)
 		}
-		slog.Info("占い結果を設定しました", "id", g.ID, "target", target.String(), "result", target.Role.Species)
 	} else {
 		slog.Warn("占い対象が見つからなかったため、占い結果を設定しません", "id", g.ID)
 	}
@@ -119,7 +118,7 @@ func (g *Game) conductDivination(agent *model.Agent) {
 func (g *Game) doGuard() {
 	slog.Info("護衛フェーズを開始します", "id", g.ID, "day", g.CurrentDay)
 	for _, agent := range g.getAliveAgents() {
-		if agent.Role == model.R_BODYGUARD && g.GameStatuses[g.CurrentDay].ExecutedAgent != agent {
+		if agent.Role == model.R_BODYGUARD {
 			g.conductGuard(agent)
 			break
 		}
