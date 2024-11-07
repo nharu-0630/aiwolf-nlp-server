@@ -54,16 +54,16 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 		packet = model.Packet{Request: &request}
 	case model.R_INITIALIZE, model.R_DAILY_INITIALIZE:
 		g.resetLastIdxMaps()
-		packet = model.Packet{Request: &request, Info: &info, Settings: &g.Settings}
-	case model.R_VOTE, model.R_DIVINE, model.R_GUARD, model.R_ATTACK:
-		packet = model.Packet{Request: &request, Info: &info}
-	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER:
-		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
+		packet = model.Packet{Request: &request, Info: &info, Settings: g.Settings}
+	case model.R_VOTE, model.R_DIVINE, model.R_GUARD:
 		packet = model.Packet{Request: &request}
+	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER, model.R_ATTACK:
+		packet = model.Packet{Request: &request}
+		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
 		if request == model.R_TALK || request == model.R_DAILY_FINISH {
 			packet.TalkHistory = &talks
 		}
-		if request == model.R_WHISPER || (request == model.R_DAILY_FINISH && agent.Role == model.R_WEREWOLF) {
+		if request == model.R_WHISPER || request == model.R_ATTACK || (request == model.R_DAILY_FINISH && agent.Role == model.R_WEREWOLF) {
 			packet.WhisperHistory = &whispers
 		}
 	case model.R_FINISH:

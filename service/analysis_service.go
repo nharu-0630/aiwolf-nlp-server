@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
@@ -31,10 +30,10 @@ type GameData struct {
 	requestMap   map[string]interface{}
 }
 
-func NewAnalysisService() *AnalysisServiceImpl {
+func NewAnalysisService(config model.Config) *AnalysisServiceImpl {
 	return &AnalysisServiceImpl{
 		gamesData: make(map[string]*GameData),
-		outputDir: config.ANALYSIS_OUTPUT_DIR,
+		outputDir: config.AnalysisServiceOutputDir,
 	}
 }
 

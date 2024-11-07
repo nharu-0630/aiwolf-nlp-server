@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/core"
+	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
 func main() {
-	server := core.NewServer(config.WEBSOCKET_INTERNAL_HOST, config.WEBSOCKET_PORT)
+	config := model.DefaultConfig
+	server := core.NewServer(config)
 	server.Run()
 }

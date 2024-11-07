@@ -15,29 +15,34 @@ import (
 )
 
 type Server struct {
-	host            string
-	port            int
+	config          model.Config
 	upgrader        websocket.Upgrader
 	waitingRoom     *WaitingRoom
 	matchOptimizer  *MatchOptimizer
+	gameSettings    *model.Settings
 	games           []*logic.Game
 	mu              sync.RWMutex
 	analysisService *service.AnalysisServiceImpl
 	apiService      *service.ApiService
 }
 
-func NewServer(host string, port int) *Server {
-	analysisService := service.NewAnalysisService()
+func NewServer(config model.Config) *Server {
+	gameSettings, err := model.NewSettings(config)
+	if err != nil {
+		slog.Error("ゲーム設定の作成に失敗しました", "error", err)
+		return nil
+	}
+	analysisService := service.NewAnalysisService(config)
 	return &Server{
-		host: host,
-		port: port,
+		config: config,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
 		},
 		waitingRoom:     NewWaitingRoom(),
-		matchOptimizer:  NewMatchOptimizer(),
+		matchOptimizer:  NewMatchOptimizer(config),
+		gameSettings:    &gameSettings,
 		games:           make([]*logic.Game, 0),
 		analysisService: analysisService,
 		apiService:      service.NewApiService(analysisService),
@@ -53,8 +58,8 @@ func (s *Server) Run() {
 
 	s.apiService.RegisterRoutes(router)
 
-	slog.Info("サーバを起動しました", "host", s.host, "port", s.port)
-	err := router.Run(s.host + ":" + strconv.Itoa(s.port))
+	slog.Info("サーバを起動しました", "host", s.config.WebSocketHost, "port", s.config.WebSocketPort)
+	err := router.Run(s.config.WebSocketHost + ":" + strconv.Itoa(s.config.WebSocketPort))
 	if err != nil {
 		slog.Error("サーバの起動に失敗しました", "error", err)
 		return
@@ -74,17 +79,12 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	s.waitingRoom.AddConnection(connection.Team, *connection)
 
-	if !s.waitingRoom.IsReady() {
+	if !s.waitingRoom.IsReady(s.config.AgentCount) {
 		return
 	}
 
-	gameSetting, err := model.NewSettings()
-	if err != nil {
-		slog.Error("ゲーム設定の作成に失敗しました", "error", err)
-		return
-	}
 	connections := s.waitingRoom.GetConnections()
-	game := logic.NewGame(gameSetting, connections, s.analysisService)
+	game := logic.NewGame(&s.config, s.gameSettings, connections, s.analysisService)
 
 	s.mu.Lock()
 	s.games = append(s.games, game)

@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
@@ -26,10 +25,10 @@ func (wr *WaitingRoom) AddConnection(team string, connection model.Connection) {
 	slog.Info("新しいクライアントが待機部屋に追加されました", "team", team, "remote_addr", connection.Conn.RemoteAddr().String())
 }
 
-func (wr *WaitingRoom) IsReady() bool {
+func (wr *WaitingRoom) IsReady(agentCount int) bool {
 	wr.mu.RLock()
 	defer wr.mu.RUnlock()
-	return len(wr.connections) == config.AGENT_COUNT_PER_GAME
+	return len(wr.connections) == agentCount
 }
 
 func (wr *WaitingRoom) GetConnections() []model.Connection {

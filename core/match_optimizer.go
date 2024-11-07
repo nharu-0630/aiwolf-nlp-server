@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
@@ -15,10 +14,10 @@ type MatchOptimizer struct {
 	outputPath   string
 }
 
-func NewMatchOptimizer() *MatchOptimizer {
+func NewMatchOptimizer(config model.Config) *MatchOptimizer {
 	mo := &MatchOptimizer{
 		matchHistory: make([]map[model.Role][]string, 0),
-		outputPath:   config.MATCH_OPTIMIZER_PATH,
+		outputPath:   config.MatchOptimizerOutputPath,
 	}
 	mo.loadMatchHistory()
 	slog.Info("マッチオプティマイザを作成しました", "length", len(mo.matchHistory))

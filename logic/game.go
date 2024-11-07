@@ -3,7 +3,6 @@ package logic
 import (
 	"log/slog"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/model"
 	"github.com/nharu-0630/aiwolf-nlp-server/service"
 	"github.com/nharu-0630/aiwolf-nlp-server/util"
@@ -11,8 +10,9 @@ import (
 )
 
 type Game struct {
+	Config            *model.Config                // 設定
 	ID                string                       // ID
-	Settings          model.Settings               // 設定
+	Settings          *model.Settings              // ゲーム設定
 	Agents            []*model.Agent               // エージェント
 	CurrentDay        int                          // 現在の日付
 	GameStatuses      map[int]*model.GameStatus    // 日ごとのゲーム状態
@@ -21,7 +21,7 @@ type Game struct {
 	AnalysisService   *service.AnalysisServiceImpl // 分析サービス
 }
 
-func NewGame(settings model.Settings, conns []model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
+func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
 	id := ulid.Make().String()
 	agents := util.CreateAgents(conns, settings.RoleNumMap)
 	gameStatus := model.NewInitializeGameStatus(agents)
@@ -29,6 +29,7 @@ func NewGame(settings model.Settings, conns []model.Connection, analysisService 
 	gameStatuses[0] = &gameStatus
 	slog.Info("ゲームを作成しました", "id", id)
 	return &Game{
+		Config:            config,
 		ID:                id,
 		Settings:          settings,
 		Agents:            agents,
@@ -40,7 +41,7 @@ func NewGame(settings model.Settings, conns []model.Connection, analysisService 
 	}
 }
 
-func NewGameWithRole(settings model.Settings, roleMapConns map[model.Role][]model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
+func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConns map[model.Role][]model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
 	id := ulid.Make().String()
 	agents := util.CreateAgentsWithRole(roleMapConns)
 	gameStatus := model.NewInitializeGameStatus(agents)
@@ -48,6 +49,7 @@ func NewGameWithRole(settings model.Settings, roleMapConns map[model.Role][]mode
 	gameStatuses[0] = &gameStatus
 	slog.Info("ゲームを作成しました", "id", id)
 	return &Game{
+		Config:            config,
 		ID:                id,
 		Settings:          settings,
 		Agents:            agents,
@@ -64,7 +66,7 @@ func (g *Game) Start() model.Team {
 	g.AnalysisService.TrackStartGame(g.ID, g.Agents)
 	g.requestToEveryone(model.R_INITIALIZE)
 	var winSide model.Team = model.T_NONE
-	for winSide == model.T_NONE && util.CalcHasErrorAgents(g.Agents) < int(float64(len(g.Agents))*config.MAX_HAS_ERROR_AGENTS_RATIO) {
+	for winSide == model.T_NONE && util.CalcHasErrorAgents(g.Agents) < int(float64(len(g.Agents))*g.Config.MaxHasErrorAgentsRatio) {
 		g.progressDay()
 		g.progressNight()
 		gameStatus := g.GameStatuses[g.CurrentDay].NextDay()

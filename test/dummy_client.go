@@ -36,6 +36,7 @@ func NewDummyClient(u url.URL, t *testing.T) (*DummyClient, error) {
 func (dc *DummyClient) listen(t *testing.T) {
 	defer close(dc.done)
 	var index int
+	var statusMap = make(map[string]string)
 	for {
 		_, message, err := dc.conn.ReadMessage()
 		if err != nil {
@@ -54,7 +55,7 @@ func (dc *DummyClient) listen(t *testing.T) {
 			continue
 		}
 
-		resp := dc.handleRequest(received, &index)
+		resp := dc.handleRequest(received, &index, &statusMap)
 		if resp != "" {
 			err = dc.conn.WriteMessage(websocket.TextMessage, []byte(resp))
 			if err != nil {
@@ -70,8 +71,17 @@ func (dc *DummyClient) listen(t *testing.T) {
 	}
 }
 
-func (dc *DummyClient) handleRequest(received map[string]interface{}, index *int) string {
+func (dc *DummyClient) handleRequest(received map[string]interface{}, index *int, statusMap *map[string]string) string {
 	if request, ok := received["request"].(string); ok {
+		if info, ok := received["info"].(map[string]interface{}); ok {
+			if sm, ok := info["statusMap"].(map[string]interface{}); ok {
+				for k, v := range sm {
+					if strVal, ok := v.(string); ok {
+						(*statusMap)[k] = strVal
+					}
+				}
+			}
+		}
 		switch request {
 		case "NAME":
 			const letterBytes = "abcdefghijklmnopqrstuvwxyz"
@@ -87,13 +97,9 @@ func (dc *DummyClient) handleRequest(received map[string]interface{}, index *int
 			}
 			return "Over"
 		case "VOTE", "DIVINE", "GUARD", "ATTACK":
-			if info, ok := received["info"].(map[string]interface{}); ok {
-				if statusMap, ok := info["statusMap"].(map[string]interface{}); ok {
-					for agent, status := range statusMap {
-						if status == "ALIVE" {
-							return agent
-						}
-					}
+			for k, v := range *statusMap {
+				if v == "ALIVE" {
+					return k
 				}
 			}
 		case "INITIALIZE", "DAILY_INITIALIZE", "DAILY_FINISH":

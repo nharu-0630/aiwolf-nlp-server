@@ -3,8 +3,6 @@ package model
 import (
 	"encoding/json"
 	"errors"
-
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 )
 
 type Settings struct {
@@ -23,25 +21,25 @@ type Settings struct {
 	MaxAttackRevote  int          `json:"maxAttackRevote"`  // 最大襲撃再投票回数
 }
 
-func NewSettings() (Settings, error) {
-	roleNumMap := Roles(config.AGENT_COUNT_PER_GAME)
+func NewSettings(config Config) (Settings, error) {
+	roleNumMap := Roles(config.AgentCount)
 	if roleNumMap == nil {
 		return Settings{}, errors.New("対応する役職の人数がありません")
 	}
 	settings := Settings{
 		RoleNumMap:       roleNumMap,
-		MaxTalk:          config.MAX_TALK_COUNT_PER_AGENT,
-		MaxTalkTurn:      config.MAX_TALK_COUNT_PER_DAY,
-		MaxWhisper:       config.MAX_WHISPER_COUNT_PER_AGENT,
-		MaxWhisperTurn:   config.MAX_WHISPER_COUNT_PER_DAY,
-		MaxSkip:          config.MAX_SKIP_COUNT_PER_DAY,
-		IsEnableNoAttack: config.ALLOW_NO_ATTACK,
-		IsVoteVisible:    config.VOTE_VISIBILITY,
-		IsTalkOnFirstDay: config.TALK_ON_FIRST_DAY,
-		ResponseTimeout:  int(config.RESPONSE_TIMEOUT.Milliseconds()),
-		ActionTimeout:    int(config.ACTION_TIMEOUT.Milliseconds()),
-		MaxRevote:        config.MAX_REVOTE_COUNT,
-		MaxAttackRevote:  config.MAX_ATTACK_REVOTE_COUNT,
+		MaxTalk:          config.MaxTalkCountPerAgent,
+		MaxTalkTurn:      config.MaxTalkCountPerDay,
+		MaxWhisper:       config.MaxWhisperCountPerAgent,
+		MaxWhisperTurn:   config.MaxWhisperCountPerDay,
+		MaxSkip:          config.MaxSkipCount,
+		IsEnableNoAttack: config.AllowNoAttack,
+		IsVoteVisible:    config.VoteVisibility,
+		IsTalkOnFirstDay: config.TalkOnFirstDay,
+		ResponseTimeout:  int(config.ResponseTimeout.Milliseconds()),
+		ActionTimeout:    int(config.ActionTimeout.Milliseconds()),
+		MaxRevote:        config.MaxVoteCount,
+		MaxAttackRevote:  config.MaxAttackCount,
 	}
 	return settings, nil
 }

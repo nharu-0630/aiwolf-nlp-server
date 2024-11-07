@@ -7,27 +7,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nharu-0630/aiwolf-nlp-server/config"
 	"github.com/nharu-0630/aiwolf-nlp-server/core"
+	"github.com/nharu-0630/aiwolf-nlp-server/model"
 )
 
 func TestGame(t *testing.T) {
-	host := config.WEBSOCKET_INTERNAL_HOST
+	config := model.DefaultConfig
 	if _, exists := os.LookupEnv("GITHUB_ACTIONS"); exists {
-		host = config.WEBSOCKET_EXTERNAL_HOST
+		config.WebSocketHost = model.WebSocketExternalHost
 	}
-	port := config.WEBSOCKET_PORT
 	go func() {
-		server := core.NewServer(host, port)
+		server := core.NewServer(config)
 		server.Run()
 	}()
 
 	time.Sleep(5 * time.Second)
 
-	u := url.URL{Scheme: "ws", Host: host + ":" + strconv.Itoa(port), Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: config.WebSocketHost + ":" + strconv.Itoa(config.WebSocketPort), Path: "/ws"}
 	t.Logf("Connecting to %s", u.String())
 
-	clientsNum := config.AGENT_COUNT_PER_GAME
+	clientsNum := config.AgentCount
 	clients := make([]*DummyClient, clientsNum)
 	for i := 0; i < clientsNum; i++ {
 		client, err := NewDummyClient(u, t)
