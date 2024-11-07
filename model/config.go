@@ -10,58 +10,58 @@ import (
 
 type Config struct {
 	WebSocket struct {
-		Host string `yaml:"host"` // ホスト名
-		Port int    `yaml:"port"` // ポート番号
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
 	} `yaml:"web_socket"`
 
 	Server struct {
-		SelfMatch bool `yaml:"self_match"` // 同じチーム名のエージェント同士のみをマッチングさせるかどうか
+		SelfMatch bool `yaml:"self_match"`
 	} `yaml:"server"`
 
 	Game struct {
-		AgentCount             int     `yaml:"agent_count"`                // 1ゲームあたりのエージェント数
-		VoteVisibility         bool    `yaml:"vote_visibility"`            // 投票の結果を公開するか
-		TalkOnFirstDay         bool    `yaml:"talk_on_first_day"`          // 1日目の発言を許可するか
-		MaxHasErrorAgentsRatio float64 `yaml:"max_has_error_agents_ratio"` // ゲームを継続するエラーエージェントの最大割合
-		Talk                   struct {
+		AgentCount            int     `yaml:"agent_count"`
+		VoteVisibility        bool    `yaml:"vote_visibility"`
+		TalkOnFirstDay        bool    `yaml:"talk_on_first_day"`
+		MaxContinueErrorRatio float64 `yaml:"max_continue_error_ratio"`
+		Talk                  struct {
 			MaxCount struct {
-				PerAgent int `yaml:"per_agent"` // 1日あたりの1エージェントの最大発言回数
-				PerDay   int `yaml:"per_day"`   // 1日あたりの全体の発言回数
+				PerAgent int `yaml:"per_agent"`
+				PerDay   int `yaml:"per_day"`
 			} `yaml:"max_count"`
 		} `yaml:"talk"`
 		Whisper struct {
 			MaxCount struct {
-				PerAgent int `yaml:"per_agent"` // 1日あたりの1エージェントの最大囁き回数
-				PerDay   int `yaml:"per_day"`   // 1日あたりの全体の囁き回数
+				PerAgent int `yaml:"per_agent"`
+				PerDay   int `yaml:"per_day"`
 			} `yaml:"max_count"`
 		} `yaml:"whisper"`
 		Skip struct {
-			MaxCount int `yaml:"max_count"` // 1日あたりの1エージェントの最大スキップ回数
+			MaxCount int `yaml:"max_count"`
 		} `yaml:"skip"`
 		Vote struct {
-			MaxCount int `yaml:"max_count"` // 1位タイの場合の最大再投票回数
+			MaxCount int `yaml:"max_count"`
 		} `yaml:"vote"`
 		Attack struct {
-			MaxCount      int  `yaml:"max_count"`       // 1位タイの場合の最大襲撃再投票回数
-			AllowNoTarget bool `yaml:"allow_no_target"` // 襲撃なしの日を許可するか
+			MaxCount      int  `yaml:"max_count"`
+			AllowNoTarget bool `yaml:"allow_no_target"`
 		} `yaml:"attack"`
 		Timeout struct {
-			Action   time.Duration `yaml:"action"`   // エージェントのアクションのタイムアウト時間
-			Response time.Duration `yaml:"response"` // エージェントの生存確認のタイムアウト時間
+			Action   time.Duration `yaml:"action"`
+			Response time.Duration `yaml:"response"`
 		} `yaml:"timeout"`
 	} `yaml:"game"`
 
 	AnalysisService struct {
-		OutputDir string `yaml:"output_dir"` // 分析結果の出力ディレクトリ
+		OutputDir string `yaml:"output_dir"`
 	} `yaml:"analysis_service"`
 
 	ApiService struct {
-		Enable             bool `yaml:"enable"`               // APIサービスの有効化
-		PublishRunningGame bool `yaml:"publish_running_game"` // 進行中のゲームを公開するか
+		Enable             bool `yaml:"enable"`
+		PublishRunningGame bool `yaml:"publish_running_game"`
 	} `yaml:"api_service"`
 
 	MatchOptimizer struct {
-		OutputPath string `yaml:"output_path"` // マッチ履歴の出力先
+		OutputPath string `yaml:"output_path"`
 	} `yaml:"match_optimizer"`
 }
 

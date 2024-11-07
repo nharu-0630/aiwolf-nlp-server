@@ -117,7 +117,7 @@ game:
   agent_count: 5
   vote_visibility: false
   talk_on_first_day: true
-  max_has_error_agents_ratio: 0.2
+  max_continue_error_ratio: 0.2
   talk:
     max_count:
       per_agent: 3
@@ -172,7 +172,7 @@ game:
 
 1日目の昼の開始から繰り返します。  
 夜の終了時点で、生存しているエージェントの陣営のどちらかが0人の場合は、ゲームを終了します。  
-また、`エージェント数*game.max_has_error_agents_ratio` 以上のエージェントがエラー状態になった場合もゲームを終了します。  
+また、`エージェント数*game.max_continue_error_ratio` 以上のエージェントがエラー状態になった場合もゲームを終了します。  
 
 #### ゲームの終了
 
