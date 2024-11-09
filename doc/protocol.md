@@ -94,12 +94,8 @@
 後ろの数字を除いた名前は、エージェントのチーム名として扱われます。
 
 ```
-2024/11/09 11:24:09 INFO クライアントが接続しました team=dpetektq name=dpetektq remote_addr=127.0.0.1:38590
-2024/11/09 11:24:09 INFO 新しいクライアントが待機部屋に追加されました team=dpetektq remote_addr=127.0.0.1:38590
-2024/11/09 11:24:09 INFO NAMEパケットを送信しました remote_addr=127.0.0.1:38602
-[GIN] 2024/11/09 - 11:24:09 | 200 |     826.126µs |       127.0.0.1 | GET      "/ws"
     dummy_client.go:50: recv: {"request":"NAME"}
-    dummy_client.go:69: send: tprlsoza
+    dummy_client.go:69: send: kanolab
 ```
 
 ### ゲーム開始リクエスト (INITIALIZE)
@@ -111,8 +107,7 @@
 **ゲームの設定を示す情報 (setting)**
 
 ```
-2024/11/09 11:24:09 INFO パケットを送信しました agent=Agent[01] packet="{Request:INITIALIZE Info:0xc000150370 Settings:0xc000088120 TalkHistory:<nil> WhisperHistory:<nil>}"
-    dummy_client.go:50: recv: {"request":"INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[02]":"WEREWOLF"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[02]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
+    dummy_client.go:50: recv: {"request":"INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"VILLAGER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
 ```
 
 ### 昼開始リクエスト (DAILY_INITIALIZE)
@@ -124,8 +119,7 @@
 **ゲームの設定を示す情報 (setting)**
 
 ```
-2024/11/09 11:24:09 INFO パケットを送信しました agent=Agent[01] packet="{Request:DAILY_INITIALIZE Info:0xc000151550 Settings:0xc000088120 TalkHistory:<nil> WhisperHistory:<nil>}"
-    dummy_client.go:50: recv: {"request":"DAILY_INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"SEER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
+    dummy_client.go:50: recv: {"request":"DAILY_INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"VILLAGER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
 ```
 
 ### 囁きリクエスト (WHISPER) / トークリクエスト (TALK)
@@ -139,16 +133,18 @@
 **囁きの履歴を示す情報 (whisperHistory)**
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc000528138 WhisperHistory:<nil>}"
-    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[04]","text":"58ef003db5f9e64550b1fc32782ed9d3"}]}
-    dummy_client.go:69: send: c778b90c7405d605a385c0931e347cae
-2024/11/07 06:42:27 INFO レスポンスを受信しました agent=Agent[01] response=c778b90c7405d605a385c0931e347cae
-2024/11/07 06:42:27 INFO 発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました id=01JC2NRBXKKASYNDHS84FTYHXA agent=Agent[01]
-2024/11/07 06:42:27 INFO 発言を受信しました id=01JC2NRBXKKASYNDHS84FTYHXA agent=Agent[01] text=c778b90c7405d605a385c0931e347cae
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[02] packet="{Request:TALK Info:<nil> Settings:<nil> TalkHistory:0xc000012990 WhisperHistory:<nil>}"
-    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[04]","text":"58ef003db5f9e64550b1fc32782ed9d3"},{"idx":1,"day":0,"turn":0,"agent":"Agent[01]","text":"c778b90c7405d605a385c0931e347cae"}]}
-    dummy_client.go:69: send: bcf2a95dbd72aa885bafe5e54d067a5b
-2024/11/07 06:42:27 INFO レスポンスを受信しました agent=Agent[02] response=bcf2a95dbd72aa885bafe5e54d067a5b
+    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[]}
+    dummy_client.go:69: send: 5afa42dd02ce60eca49c80e7f059ab95
+```
+
+```
+    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[01]","text":"5afa42dd02ce60eca49c80e7f059ab95"}]}
+    dummy_client.go:69: send: f086ef4b8251aa484faca6467d55aeef
+```
+
+```
+    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[01]","text":"5afa42dd02ce60eca49c80e7f059ab95"},{"idx":1,"day":0,"turn":0,"agent":"Agent[04]","text":"f086ef4b8251aa484faca6467d55aeef"}]}
+    dummy_client.go:69: send: a4e9af9221189dc8cfaf4e051c141e1e
 ```
 
 ### 昼終了リクエスト (DAILY_FINISH)
@@ -162,8 +158,7 @@
 **囁きの履歴を示す情報 (whisperHistory)**
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[03] packet="{Request:DAILY_FINISH Info:<nil> Settings:<nil> TalkHistory:0xc0004b23f0 WhisperHistory:0xc0004b2408}"
-    dummy_client.go:50: recv: {"request":"DAILY_FINISH","talkHistory":[{"idx":14,"day":0,"turn":2,"agent":"Agent[03]","text":"Over"}],"whisperHistory":[]}
+    dummy_client.go:50: recv: {"request":"DAILY_FINISH","talkHistory":[{"idx":10,"day":0,"turn":2,"agent":"Agent[01]","text":"Over"},{"idx":11,"day":0,"turn":2,"agent":"Agent[04]","text":"Over"},{"idx":12,"day":0,"turn":2,"agent":"Agent[05]","text":"Over"},{"idx":13,"day":0,"turn":2,"agent":"Agent[03]","text":"Over"},{"idx":14,"day":0,"turn":2,"agent":"Agent[02]","text":"Over"}]}
 ```
 
 ### 占いリクエスト (DIVINE)
@@ -173,10 +168,8 @@
 エージェントは、このリクエストを受信した際に、占いの対象となるエージェントのインデックス付き文字列を返す必要があります。
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[04] packet="{Request:DIVINE Info:<nil> Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
     dummy_client.go:50: recv: {"request":"DIVINE"}
-    dummy_client.go:69: send: Agent[03]
-2024/11/07 06:42:27 INFO レスポンスを受信しました agent=Agent[04] response=Agent[03]
+    dummy_client.go:69: send: Agent[02]
 ```
 
 ### 護衛リクエスト (GUARD)
@@ -186,10 +179,8 @@
 エージェントは、このリクエストを受信した際に、護衛の対象となるエージェントのインデックス付き文字列を返す必要があります。
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[05] packet="{Request:GUARD Info:<nil> Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
     dummy_client.go:50: recv: {"request":"GUARD"}
-    dummy_client.go:69: send: Agent[05]
-2024/11/07 06:42:27 INFO レスポンスを受信しました agent=Agent[05] response=Agent[05]
+    dummy_client.go:69: send: Agent[03]
 ```
 
 ### 投票リクエスト (VOTE)
@@ -198,10 +189,8 @@
 エージェントは、このリクエストを受信した際に、投票の対象となるエージェントのインデックス付き文字列を返す必要があります。
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:VOTE Info:<nil> Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
     dummy_client.go:50: recv: {"request":"VOTE"}
-    dummy_client.go:69: send: Agent[01]
-2024/11/07 06:42:27 INFO レスポンスを受信しました agent=Agent[01] response=Agent[01]
+    dummy_client.go:69: send: Agent[04]
 ```
 
 ### 襲撃リクエスト (ATTACK)
@@ -215,10 +204,8 @@
 **会話の履歴を示す情報 (whisperHistory)**
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[03] packet="{Request:ATTACK Info:<nil> Settings:<nil> TalkHistory:<nil> WhisperHistory:0xc0004b2228}"
     dummy_client.go:50: recv: {"request":"ATTACK","whisperHistory":[]}
-    dummy_client.go:69: send: Agent[02]
-2024/11/07 06:42:27 INFO レスポンスを受信しました agent=Agent[03] response=Agent[02]
+    dummy_client.go:69: send: Agent[05]
 ```
 
 ### ゲーム終了リクエスト (FINISH)
@@ -231,6 +218,5 @@
 なお、`roleMap` は自分以外も含めたすべてのエージェントの役職が含まれます。
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:FINISH Info:0xc0000b1130 Settings:<nil> TalkHistory:<nil> WhisperHistory:<nil>}"
-    dummy_client.go:50: recv: {"request":"FINISH","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"DEAD","Agent[03]":"ALIVE","Agent[04]":"DEAD","Agent[05]":"DEAD"},"roleMap":{"Agent[01]":"VILLAGER","Agent[02]":"VILLAGER","Agent[03]":"WEREWOLF","Agent[04]":"SEER","Agent[05]":"BODYGUARD"},"remainTalkMap":{},"remainWhisperMap":{},"day":4,"agent":"Agent[01]","executedAgent":"Agent[01]"}}
+    dummy_client.go:50: recv: {"request":"FINISH","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"DEAD","Agent[03]":"ALIVE","Agent[04]":"DEAD","Agent[05]":"DEAD"},"roleMap":{"Agent[01]":"VILLAGER","Agent[02]":"SEER","Agent[03]":"WEREWOLF","Agent[04]":"VILLAGER","Agent[05]":"POSSESSED"},"remainTalkMap":{},"remainWhisperMap":{},"day":5,"agent":"Agent[01]","executedAgent":"Agent[04]"}}
 ```
