@@ -15,10 +15,10 @@ jobs:
           go-version: 1.23.x
       - name: Build Multi Platform
         run: |
-          GOOS=linux GOARCH=amd64 go build -o dist/aiwolf-nlp-server-linux-amd64
-          GOOS=windows GOARCH=amd64 go build -o dist/aiwolf-nlp-server-windows-amd64.exe
-          GOOS=darwin GOARCH=amd64 go build -o dist/aiwolf-nlp-server-darwin-amd64
-          GOOS=darwin GOARCH=arm64 go build -o dist/aiwolf-nlp-server-darwin-arm64
+          GOOS=linux GOARCH=amd64 go build -race -ldflags "-X main.version=$(git describe --tag --abbrev=0) -X main.revision=$(git rev-list -1 HEAD) -X main.build=$(git describe --tags)" -o dist/aiwolf-nlp-server-linux-amd64
+          GOOS=windows GOARCH=amd64 go build -race -ldflags "-X main.version=$(git describe --tag --abbrev=0) -X main.revision=$(git rev-list -1 HEAD) -X main.build=$(git describe --tags)" -o dist/aiwolf-nlp-server-windows-amd64.exe
+          GOOS=darwin GOARCH=amd64 go build -race -ldflags "-X main.version=$(git describe --tag --abbrev=0) -X main.revision=$(git rev-list -1 HEAD) -X main.build=$(git describe --tags)" -o dist/aiwolf-nlp-server-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -race -ldflags "-X main.version=$(git describe --tag --abbrev=0) -X main.revision=$(git rev-list -1 HEAD) -X main.build=$(git describe --tags)" -o dist/aiwolf-nlp-server-darwin-arm64
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:

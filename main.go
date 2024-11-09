@@ -8,14 +8,28 @@ import (
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
+var (
+	version  string
+	revision string
+	build    string
+)
+
 func main() {
 	var (
-		configPath = flag.String("c", "./default.yml", "設定ファイルのパス")
-		help       = flag.Bool("h", false, "ヘルプを表示")
+		configPath  = flag.String("c", "./default.yml", "設定ファイルのパス")
+		showVersion = flag.Bool("v", false, "バージョンを表示")
+		showHelp    = flag.Bool("h", false, "ヘルプを表示")
 	)
 	flag.Parse()
 
-	if *help {
+	if *showVersion {
+		println("version:", version)
+		println("revision:", revision)
+		println("build:", build)
+		os.Exit(0)
+	}
+
+	if *showHelp {
 		flag.Usage()
 		os.Exit(0)
 	}
