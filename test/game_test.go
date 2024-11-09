@@ -17,7 +17,7 @@ func TestGame(t *testing.T) {
 		t.Fatalf("Failed to load config: %v", err)
 	}
 	if _, exists := os.LookupEnv("GITHUB_ACTIONS"); exists {
-		config.WebSocket.Host = model.WebSocketExternalHost
+		config.Server.WebSocket.Host = model.WebSocketExternalHost
 	}
 	go func() {
 		server := core.NewServer(*config)
@@ -26,7 +26,7 @@ func TestGame(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	u := url.URL{Scheme: "ws", Host: config.WebSocket.Host + ":" + strconv.Itoa(config.WebSocket.Port), Path: "/ws"}
+	u := url.URL{Scheme: "ws", Host: config.Server.WebSocket.Host + ":" + strconv.Itoa(config.Server.WebSocket.Port), Path: "/ws"}
 	t.Logf("Connecting to %s", u.String())
 
 	clientsNum := config.Game.AgentCount
