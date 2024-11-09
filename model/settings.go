@@ -6,6 +6,7 @@ import (
 )
 
 type Settings struct {
+	PlayerNum        int          `json:"playerNum"`
 	RoleNumMap       map[Role]int `json:"roleNumMap"`
 	MaxTalk          int          `json:"maxTalk"`
 	MaxTalkTurn      int          `json:"maxTalkTurn"`
@@ -27,6 +28,7 @@ func NewSettings(config Config) (Settings, error) {
 		return Settings{}, errors.New("対応する役職の人数がありません")
 	}
 	settings := Settings{
+		PlayerNum:        config.Game.AgentCount,
 		RoleNumMap:       roleNumMap,
 		MaxTalk:          config.Game.Talk.MaxCount.PerAgent,
 		MaxTalkTurn:      config.Game.Talk.MaxCount.PerDay,

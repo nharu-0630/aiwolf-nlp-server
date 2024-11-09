@@ -65,10 +65,10 @@ func Roles(num int) map[Role]int {
 	case 5:
 		return map[Role]int{
 			R_WEREWOLF:  1,
-			R_POSSESSED: 0,
+			R_POSSESSED: 1,
 			R_SEER:      1,
 			R_BODYGUARD: 0,
-			R_VILLAGER:  3,
+			R_VILLAGER:  2,
 			R_MEDIUM:    0,
 		}
 	}
