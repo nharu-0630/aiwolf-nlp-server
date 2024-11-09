@@ -3,8 +3,8 @@ package model
 type Status string
 
 const (
-	S_ALIVE Status = "ALIVE" // 生存
-	S_DEAD  Status = "DEAD"  // 死亡
+	S_ALIVE Status = "ALIVE"
+	S_DEAD  Status = "DEAD"
 )
 
 func (s Status) String() string {

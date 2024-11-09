@@ -14,7 +14,7 @@ func (g *Game) doExecution() {
 	candidates := make([]*model.Agent, 0)
 	for i := 0; i < g.Settings.MaxRevote; i++ {
 		g.executeVote()
-		candidates = g.getVotedCandidates(g.GameStatuses[g.CurrentDay].VoteList)
+		candidates = g.getVotedCandidates(g.GameStatuses[g.CurrentDay].Votes)
 		if len(candidates) == 1 {
 			executed = candidates[0]
 			break
@@ -48,14 +48,14 @@ func (g *Game) doAttack() {
 	if len(werewolfs) > 0 {
 		for i := 0; i < g.Settings.MaxAttackRevote; i++ {
 			g.executeAttackVote()
-			candidates := g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVoteList)
+			candidates := g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVotes)
 			if len(candidates) == 1 {
 				attacked = candidates[0]
 				break
 			}
 		}
 		if attacked == nil && !g.Settings.IsEnableNoAttack {
-			attacked = util.SelectRandomAgent(g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVoteList))
+			attacked = util.SelectRandomAgent(g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVotes))
 		}
 
 		if attacked != nil && !g.isGuarded(attacked) {
@@ -140,12 +140,12 @@ func (g *Game) conductGuard(agent *model.Agent) {
 
 func (g *Game) executeVote() {
 	slog.Info("投票アクションを開始します", "id", g.ID, "day", g.CurrentDay)
-	g.GameStatuses[g.CurrentDay].VoteList = g.collectVotes(model.R_VOTE, g.getAliveAgents())
+	g.GameStatuses[g.CurrentDay].Votes = g.collectVotes(model.R_VOTE, g.getAliveAgents())
 }
 
 func (g *Game) executeAttackVote() {
 	slog.Info("襲撃投票アクションを開始します", "id", g.ID, "day", g.CurrentDay)
-	g.GameStatuses[g.CurrentDay].AttackVoteList = g.collectVotes(model.R_ATTACK, g.getAliveWerewolves())
+	g.GameStatuses[g.CurrentDay].AttackVotes = g.collectVotes(model.R_ATTACK, g.getAliveWerewolves())
 }
 
 func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []model.Vote {
@@ -190,13 +190,13 @@ func (g *Game) conductCommunication(request model.Request) {
 		g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalkTurn)
 		maxTurn = g.Settings.MaxTalk
 		remainMap = g.GameStatuses[g.CurrentDay].RemainTalkMap
-		talkList = &g.GameStatuses[g.CurrentDay].TalkList
+		talkList = &g.GameStatuses[g.CurrentDay].Talks
 	case model.R_WHISPER:
 		agents = g.getAliveWerewolves()
 		g.GameStatuses[g.CurrentDay].ResetRemainWhisperMap(g.Settings.MaxWhisperTurn)
 		maxTurn = g.Settings.MaxWhisper
 		remainMap = g.GameStatuses[g.CurrentDay].RemainWhisperMap
-		talkList = &g.GameStatuses[g.CurrentDay].WhisperList
+		talkList = &g.GameStatuses[g.CurrentDay].Whispers
 	}
 
 	if len(agents) < 2 {

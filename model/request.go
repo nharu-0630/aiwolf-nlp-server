@@ -3,45 +3,45 @@ package model
 import "encoding/json"
 
 type Request struct {
-	Type             string `json:"request"`           // リクエスト
-	RequiredResponse bool   `json:"required_response"` // 応答が必要か
+	Type            string
+	RequireResponse bool
 }
 
 var (
 	R_NAME = Request{
-		Type:             "NAME",
-		RequiredResponse: true,
+		Type:            "NAME",
+		RequireResponse: true,
 	}
 	R_TALK = Request{
-		Type:             "TALK",
-		RequiredResponse: true}
+		Type:            "TALK",
+		RequireResponse: true}
 	R_WHISPER = Request{
-		Type:             "WHISPER",
-		RequiredResponse: true}
+		Type:            "WHISPER",
+		RequireResponse: true}
 	R_VOTE = Request{
-		Type:             "VOTE",
-		RequiredResponse: true}
+		Type:            "VOTE",
+		RequireResponse: true}
 	R_DIVINE = Request{
-		Type:             "DIVINE",
-		RequiredResponse: true}
+		Type:            "DIVINE",
+		RequireResponse: true}
 	R_GUARD = Request{
-		Type:             "GUARD",
-		RequiredResponse: true}
+		Type:            "GUARD",
+		RequireResponse: true}
 	R_ATTACK = Request{
-		Type:             "ATTACK",
-		RequiredResponse: true}
+		Type:            "ATTACK",
+		RequireResponse: true}
 	R_INITIALIZE = Request{
-		Type:             "INITIALIZE",
-		RequiredResponse: false}
+		Type:            "INITIALIZE",
+		RequireResponse: false}
 	R_DAILY_INITIALIZE = Request{
-		Type:             "DAILY_INITIALIZE",
-		RequiredResponse: false}
+		Type:            "DAILY_INITIALIZE",
+		RequireResponse: false}
 	R_DAILY_FINISH = Request{
-		Type:             "DAILY_FINISH",
-		RequiredResponse: false}
+		Type:            "DAILY_FINISH",
+		RequireResponse: false}
 	R_FINISH = Request{
-		Type:             "FINISH",
-		RequiredResponse: false}
+		Type:            "FINISH",
+		RequireResponse: false}
 )
 
 func (r Request) String() string {

@@ -6,19 +6,19 @@ import (
 )
 
 type Settings struct {
-	RoleNumMap       map[Role]int `json:"roleNumMap"`       // 役職の人数
-	MaxTalk          int          `json:"maxTalk"`          // 1日あたりの1エージェントの最大発言回数
-	MaxTalkTurn      int          `json:"maxTalkTurn"`      // 1日あたりの全体の発言回数
-	MaxWhisper       int          `json:"maxWhisper"`       // 1日あたりの1エージェントの最大囁き回数
-	MaxWhisperTurn   int          `json:"maxWhisperTurn"`   // 1日あたりの全体の囁き回数
-	MaxSkip          int          `json:"maxSkip"`          // 1日あたりの最大スキップ回数
-	IsEnableNoAttack bool         `json:"isEnableNoAttack"` // 襲撃なしの日を許可するか
-	IsVoteVisible    bool         `json:"isVoteVisible"`    // 投票の結果を公開するか
-	IsTalkOnFirstDay bool         `json:"isTalkOnFirstDay"` // 1日目の発言を許可するか
-	ResponseTimeout  int          `json:"responseTimeout"`  // タイムアウト時間
-	ActionTimeout    int          `json:"actionTimeout"`    // タイムアウト時間
-	MaxRevote        int          `json:"maxRevote"`        // 最大投票回数
-	MaxAttackRevote  int          `json:"maxAttackRevote"`  // 最大襲撃再投票回数
+	RoleNumMap       map[Role]int `json:"roleNumMap"`
+	MaxTalk          int          `json:"maxTalk"`
+	MaxTalkTurn      int          `json:"maxTalkTurn"`
+	MaxWhisper       int          `json:"maxWhisper"`
+	MaxWhisperTurn   int          `json:"maxWhisperTurn"`
+	MaxSkip          int          `json:"maxSkip"`
+	IsEnableNoAttack bool         `json:"isEnableNoAttack"`
+	IsVoteVisible    bool         `json:"isVoteVisible"`
+	IsTalkOnFirstDay bool         `json:"isTalkOnFirstDay"`
+	ResponseTimeout  int          `json:"responseTimeout"`
+	ActionTimeout    int          `json:"actionTimeout"`
+	MaxRevote        int          `json:"maxRevote"`
+	MaxAttackRevote  int          `json:"maxAttackRevote"`
 }
 
 func NewSettings(config Config) (Settings, error) {

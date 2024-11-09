@@ -3,20 +3,20 @@ package model
 import "encoding/json"
 
 type Info struct {
-	Day              int              `json:"day"`                      // 日付
-	Agent            *Agent           `json:"agent,omitempty"`          // 自身のエージェント
-	MediumResult     *Judge           `json:"mediumResult,omitempty"`   // 霊媒師の結果
-	DivineResult     *Judge           `json:"divineResult,omitempty"`   // 占い師の結果
-	ExecutedAgent    *Agent           `json:"executedAgent,omitempty"`  // 処刑されたエージェント
-	AttackedAgent    *Agent           `json:"attackedAgent,omitempty"`  // 襲撃されたエージェント
-	VoteList         []Vote           `json:"voteList,omitempty"`       // 投票リスト
-	AttackVoteList   []Vote           `json:"attackVoteList,omitempty"` // 襲撃投票リスト
-	TalkList         []Talk           `json:"-"`                        // 会話リスト
-	WhisperList      []Talk           `json:"-"`                        // 囁きリスト
-	StatusMap        map[Agent]Status `json:"statusMap"`                // エージェントと生死の対応
-	RoleMap          map[Agent]Role   `json:"roleMap"`                  // エージェントと役職の対応
-	RemainTalkMap    map[Agent]int    `json:"remainTalkMap"`            // エージェントと残りトーク回数の対応
-	RemainWhisperMap map[Agent]int    `json:"remainWhisperMap"`         // エージェントと残り囁き回数の対応
+	Day              int              `json:"day"`
+	Agent            *Agent           `json:"agent,omitempty"`
+	MediumResult     *Judge           `json:"mediumResult,omitempty"`
+	DivineResult     *Judge           `json:"divineResult,omitempty"`
+	ExecutedAgent    *Agent           `json:"executedAgent,omitempty"`
+	AttackedAgent    *Agent           `json:"attackedAgent,omitempty"`
+	VoteList         []Vote           `json:"voteList,omitempty"`
+	AttackVoteList   []Vote           `json:"attackVoteList,omitempty"`
+	TalkList         []Talk           `json:"-"`
+	WhisperList      []Talk           `json:"-"`
+	StatusMap        map[Agent]Status `json:"statusMap"`
+	RoleMap          map[Agent]Role   `json:"roleMap"`
+	RemainTalkMap    map[Agent]int    `json:"remainTalkMap"`
+	RemainWhisperMap map[Agent]int    `json:"remainWhisperMap"`
 }
 
 func (i Info) MarshalJSON() ([]byte, error) {
@@ -71,15 +71,15 @@ func NewInfo(agent *Agent, gameStatus *GameStatus, lastGameStatus *GameStatus, s
 			info.AttackedAgent = lastGameStatus.AttackedAgent
 		}
 		if settings.IsVoteVisible {
-			info.VoteList = lastGameStatus.VoteList
+			info.VoteList = lastGameStatus.Votes
 		}
 		if settings.IsVoteVisible && agent.Role == R_WEREWOLF {
-			info.AttackVoteList = lastGameStatus.AttackVoteList
+			info.AttackVoteList = lastGameStatus.AttackVotes
 		}
 	}
-	info.TalkList = gameStatus.TalkList
+	info.TalkList = gameStatus.Talks
 	if agent.Role == R_WEREWOLF {
-		info.WhisperList = gameStatus.WhisperList
+		info.WhisperList = gameStatus.Whispers
 	}
 	info.StatusMap = gameStatus.StatusMap
 	roleMap := make(map[Agent]Role)

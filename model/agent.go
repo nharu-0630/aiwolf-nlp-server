@@ -51,7 +51,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		return "", err
 	}
 	slog.Info("パケットを送信しました", "agent", a.String(), "packet", packet)
-	if packet.Request.RequiredResponse {
+	if packet.Request.RequireResponse {
 		responseChan := make(chan []byte)
 		errChan := make(chan error)
 		go func() {

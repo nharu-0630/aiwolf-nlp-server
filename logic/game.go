@@ -10,15 +10,15 @@ import (
 )
 
 type Game struct {
-	Config            *model.Config                // 設定
-	ID                string                       // ID
-	Settings          *model.Settings              // ゲーム設定
-	Agents            []*model.Agent               // エージェント
-	CurrentDay        int                          // 現在の日付
-	GameStatuses      map[int]*model.GameStatus    // 日ごとのゲーム状態
-	LastTalkIdxMap    map[*model.Agent]int         // 最後に送信したトークのインデックス
-	LastWhisperIdxMap map[*model.Agent]int         // 最後に送信した囁きのインデックス
-	AnalysisService   *service.AnalysisServiceImpl // 分析サービス
+	Config            *model.Config
+	ID                string
+	Settings          *model.Settings
+	Agents            []*model.Agent
+	CurrentDay        int
+	GameStatuses      map[int]*model.GameStatus
+	LastTalkIdxMap    map[*model.Agent]int
+	LastWhisperIdxMap map[*model.Agent]int
+	AnalysisService   *service.AnalysisServiceImpl
 }
 
 func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection, analysisService *service.AnalysisServiceImpl) *Game {

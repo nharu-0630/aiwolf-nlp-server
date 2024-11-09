@@ -1,11 +1,11 @@
 package model
 
 type Talk struct {
-	Idx   int    `json:"idx"`   // インデックス
-	Day   int    `json:"day"`   // 日付
-	Turn  int    `json:"turn"`  // ターン
-	Agent Agent  `json:"agent"` // エージェント
-	Text  string `json:"text"`  // 本文
+	Idx   int    `json:"idx"`
+	Day   int    `json:"day"`
+	Turn  int    `json:"turn"`
+	Agent Agent  `json:"agent"`
+	Text  string `json:"text"`
 }
 
 const (
