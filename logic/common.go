@@ -99,7 +99,7 @@ func (g *Game) getAliveAgents() []*model.Agent {
 
 func (g *Game) getAliveWerewolves() []*model.Agent {
 	return util.FilterAgents(g.Agents, func(agent *model.Agent) bool {
-		return g.isAlive(agent) && agent.Role.Team == model.T_WEREWOLF
+		return g.isAlive(agent) && agent.Role.Species == model.S_WEREWOLF
 	})
 }
 

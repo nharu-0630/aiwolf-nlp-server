@@ -90,15 +90,16 @@
 名前リクエストは、エージェントがサーバに接続した際に送信されるリクエストです。  
 エージェントは、このリクエストを受信した際に、自身の名前を返す必要があります。  
 複数エージェントを接続する場合、後ろにユニークな数字をつける必要があります。  
-例えば、 `dpetektq` という名前を返す場合、 `dpetektq1`, `dpetektq2` などとします。  
+例えば、 `kanolab` という名前を返す場合、 `kanolab1`, `kanolab2` などとします。  
 後ろの数字を除いた名前は、エージェントのチーム名として扱われます。
 
 ```
-2024/11/07 06:42:27 INFO NAMEパケットを送信しました remote_addr=127.0.0.1:36266
+2024/11/09 11:24:09 INFO クライアントが接続しました team=dpetektq name=dpetektq remote_addr=127.0.0.1:38590
+2024/11/09 11:24:09 INFO 新しいクライアントが待機部屋に追加されました team=dpetektq remote_addr=127.0.0.1:38590
+2024/11/09 11:24:09 INFO NAMEパケットを送信しました remote_addr=127.0.0.1:38602
+[GIN] 2024/11/09 - 11:24:09 | 200 |     826.126µs |       127.0.0.1 | GET      "/ws"
     dummy_client.go:50: recv: {"request":"NAME"}
-    dummy_client.go:69: send: dpetektq
-2024/11/07 06:42:27 INFO クライアントが接続しました team=dpetektq name=dpetektq remote_addr=127.0.0.1:36266
-2024/11/07 06:42:27 INFO 新しいクライアントが待機部屋に追加されました team=dpetektq remote_addr=127.0.0.1:36266
+    dummy_client.go:69: send: tprlsoza
 ```
 
 ### ゲーム開始リクエスト (INITIALIZE)
@@ -110,8 +111,8 @@
 **ゲームの設定を示す情報 (setting)**
 
 ```
-2024/11/06 05:22:04 INFO パケットを送信しました agent=Agent[02] packet="{Request:INITIALIZE Info:0xc000184210 Settings:0xc0000b0430 TalkHistory:[] WhisperHistory:[]}"
-    dummy_client.go:49: recv: {"request":"INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[02]":"SEER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[02]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":0,"SEER":1,"VILLAGER":3,"WEREWOLF":1},"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
+2024/11/09 11:24:09 INFO パケットを送信しました agent=Agent[01] packet="{Request:INITIALIZE Info:0xc000150370 Settings:0xc000088120 TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:50: recv: {"request":"INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[02]":"WEREWOLF"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[02]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
 ```
 
 ### 昼開始リクエスト (DAILY_INITIALIZE)
@@ -123,8 +124,8 @@
 **ゲームの設定を示す情報 (setting)**
 
 ```
-2024/11/07 06:42:27 INFO パケットを送信しました agent=Agent[01] packet="{Request:DAILY_INITIALIZE Info:0xc0000b16b0 Settings:0xc0000ed020 TalkHistory:<nil> WhisperHistory:<nil>}"
-    dummy_client.go:50: recv: {"request":"DAILY_INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"VILLAGER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":1,"MEDIUM":0,"POSSESSED":0,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
+2024/11/09 11:24:09 INFO パケットを送信しました agent=Agent[01] packet="{Request:DAILY_INITIALIZE Info:0xc000151550 Settings:0xc000088120 TalkHistory:<nil> WhisperHistory:<nil>}"
+    dummy_client.go:50: recv: {"request":"DAILY_INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"SEER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
 ```
 
 ### 囁きリクエスト (WHISPER) / トークリクエスト (TALK)
