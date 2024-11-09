@@ -1,8 +1,7 @@
-web_socket:
-  host: "127.0.0.1" # ホスト名
-  port: 8080 # ポート番号
-
 server:
+  web_socket:
+    host: "127.0.0.1" # ホスト名
+    port: 8080 # ポート番号
   self_match: false # 同じチーム名のエージェント同士のみをマッチングさせるか
 
 game:

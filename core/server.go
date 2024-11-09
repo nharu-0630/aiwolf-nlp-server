@@ -60,8 +60,8 @@ func (s *Server) Run() {
 		s.apiService.RegisterRoutes(router)
 	}
 
-	slog.Info("サーバを起動しました", "host", s.config.WebSocket.Host, "port", s.config.WebSocket.Port)
-	err := router.Run(s.config.WebSocket.Host + ":" + strconv.Itoa(s.config.WebSocket.Port))
+	slog.Info("サーバを起動しました", "host", s.config.Server.WebSocket.Host, "port", s.config.Server.WebSocket.Port)
+	err := router.Run(s.config.Server.WebSocket.Host + ":" + strconv.Itoa(s.config.Server.WebSocket.Port))
 	if err != nil {
 		slog.Error("サーバの起動に失敗しました", "error", err)
 		return

@@ -9,15 +9,13 @@ import (
 )
 
 type Config struct {
-	WebSocket struct {
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
-	} `yaml:"web_socket"`
-
 	Server struct {
+		WebSocket struct {
+			Host string `yaml:"host"`
+			Port int    `yaml:"port"`
+		} `yaml:"web_socket"`
 		SelfMatch bool `yaml:"self_match"`
 	} `yaml:"server"`
-
 	Game struct {
 		AgentCount            int     `yaml:"agent_count"`
 		VoteVisibility        bool    `yaml:"vote_visibility"`
@@ -50,16 +48,13 @@ type Config struct {
 			Response time.Duration `yaml:"response"`
 		} `yaml:"timeout"`
 	} `yaml:"game"`
-
 	AnalysisService struct {
 		OutputDir string `yaml:"output_dir"`
 	} `yaml:"analysis_service"`
-
 	ApiService struct {
 		Enable             bool `yaml:"enable"`
 		PublishRunningGame bool `yaml:"publish_running_game"`
 	} `yaml:"api_service"`
-
 	MatchOptimizer struct {
 		OutputPath string `yaml:"output_path"`
 	} `yaml:"match_optimizer"`
