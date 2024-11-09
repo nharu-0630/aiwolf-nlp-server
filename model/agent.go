@@ -12,12 +12,12 @@ import (
 )
 
 type Agent struct {
-	Idx        int             `json:"idx"`       // インデックス
-	Team       string          `json:"team"`      // チーム
-	Name       string          `json:"name"`      // 名前
-	Role       Role            `json:"role"`      // 役職
-	Connection *websocket.Conn `json:"-"`         // 接続
-	HasError   bool            `json:"has_error"` // エラーが発生したかどうか
+	Idx        int
+	Team       string
+	Name       string
+	Role       Role
+	Connection *websocket.Conn
+	HasError   bool
 }
 
 func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
