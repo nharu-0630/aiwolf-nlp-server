@@ -3,20 +3,18 @@ package model
 import "encoding/json"
 
 type Info struct {
-	Day              int              `json:"day"`
-	Agent            *Agent           `json:"agent,omitempty"`
-	MediumResult     *Judge           `json:"mediumResult,omitempty"`
-	DivineResult     *Judge           `json:"divineResult,omitempty"`
-	ExecutedAgent    *Agent           `json:"executedAgent,omitempty"`
-	AttackedAgent    *Agent           `json:"attackedAgent,omitempty"`
-	VoteList         []Vote           `json:"voteList,omitempty"`
-	AttackVoteList   []Vote           `json:"attackVoteList,omitempty"`
-	TalkList         []Talk           `json:"-"`
-	WhisperList      []Talk           `json:"-"`
-	StatusMap        map[Agent]Status `json:"statusMap"`
-	RoleMap          map[Agent]Role   `json:"roleMap"`
-	RemainTalkMap    map[Agent]int    `json:"remainTalkMap"`
-	RemainWhisperMap map[Agent]int    `json:"remainWhisperMap"`
+	Day            int              `json:"day"`
+	Agent          *Agent           `json:"agent,omitempty"`
+	MediumResult   *Judge           `json:"mediumResult,omitempty"`
+	DivineResult   *Judge           `json:"divineResult,omitempty"`
+	ExecutedAgent  *Agent           `json:"executedAgent,omitempty"`
+	AttackedAgent  *Agent           `json:"attackedAgent,omitempty"`
+	VoteList       []Vote           `json:"voteList,omitempty"`
+	AttackVoteList []Vote           `json:"attackVoteList,omitempty"`
+	TalkList       []Talk           `json:"-"`
+	WhisperList    []Talk           `json:"-"`
+	StatusMap      map[Agent]Status `json:"statusMap"`
+	RoleMap        map[Agent]Role   `json:"roleMap"`
 }
 
 func (i Info) MarshalJSON() ([]byte, error) {
@@ -28,27 +26,15 @@ func (i Info) MarshalJSON() ([]byte, error) {
 	for k, v := range i.RoleMap {
 		roleMap[k.String()] = v
 	}
-	remainTalkMap := make(map[string]int)
-	for k, v := range i.RemainTalkMap {
-		remainTalkMap[k.String()] = v
-	}
-	remainWhisperMap := make(map[string]int)
-	for k, v := range i.RemainWhisperMap {
-		remainWhisperMap[k.String()] = v
-	}
 	type Alias Info
 	return json.Marshal(&struct {
-		StatusMap        map[string]Status `json:"statusMap"`
-		RoleMap          map[string]Role   `json:"roleMap"`
-		RemainTalkMap    map[string]int    `json:"remainTalkMap"`
-		RemainWhisperMap map[string]int    `json:"remainWhisperMap"`
+		StatusMap map[string]Status `json:"statusMap"`
+		RoleMap   map[string]Role   `json:"roleMap"`
 		*Alias
 	}{
-		StatusMap:        statusMap,
-		RoleMap:          roleMap,
-		RemainTalkMap:    remainTalkMap,
-		RemainWhisperMap: remainWhisperMap,
-		Alias:            (*Alias)(&i),
+		StatusMap: statusMap,
+		RoleMap:   roleMap,
+		Alias:     (*Alias)(&i),
 	})
 }
 
@@ -92,9 +78,5 @@ func NewInfo(agent *Agent, gameStatus *GameStatus, lastGameStatus *GameStatus, s
 		}
 	}
 	info.RoleMap = roleMap
-	info.RemainTalkMap = gameStatus.RemainTalkMap
-	if agent.Role == R_WEREWOLF {
-		info.RemainWhisperMap = gameStatus.RemainWhisperMap
-	}
 	return info
 }

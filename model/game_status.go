@@ -70,6 +70,12 @@ func (g GameStatus) ResetRemainTalkMap(count int) {
 	}
 }
 
+func (g GameStatus) ClearRemainTalkMap() {
+	for agent := range g.RemainTalkMap {
+		delete(g.RemainTalkMap, agent)
+	}
+}
+
 func (g GameStatus) ResetRemainWhisperMap(count int) {
 	for agent, status := range g.StatusMap {
 		if status == S_ALIVE {
@@ -81,5 +87,11 @@ func (g GameStatus) ResetRemainWhisperMap(count int) {
 		} else {
 			g.RemainWhisperMap[agent] = 0
 		}
+	}
+}
+
+func (g GameStatus) ClearRemainWhisperMap() {
+	for agent := range g.RemainWhisperMap {
+		delete(g.RemainWhisperMap, agent)
 	}
 }

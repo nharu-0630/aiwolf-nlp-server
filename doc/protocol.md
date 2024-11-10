@@ -53,8 +53,6 @@
 - attackVoteList: 襲撃の投票結果 (エージェントの役職が人狼かつ襲撃投票結果が公開されている場合のみ)
 - statusMap: 各エージェントの生存状態を示すマップ
 - roleMap: 各エージェントの役職を示すマップ (自分以外のエージェントの役職は見えません)
-- remainTalkMap: 現リクエスト時における各エージェントの残り発言数を示すマップ
-- remainWhisperMap: 現リクエスト時における各エージェントの残り囁き数を示すマップ
 
 ### ゲームの設定を示す情報 (setting)
 
@@ -106,9 +104,7 @@
 **ゲームの現状態を示す情報 (info)**  
 **ゲームの設定を示す情報 (setting)**
 
-```
-    dummy_client.go:50: recv: {"request":"INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"VILLAGER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
-```
+具体例はログを参照してください。
 
 ### 昼開始リクエスト (DAILY_INITIALIZE)
 
@@ -118,9 +114,7 @@
 **ゲームの現状態を示す情報 (info)**  
 **ゲームの設定を示す情報 (setting)**
 
-```
-    dummy_client.go:50: recv: {"request":"DAILY_INITIALIZE","info":{"statusMap":{"Agent[01]":"ALIVE","Agent[02]":"ALIVE","Agent[03]":"ALIVE","Agent[04]":"ALIVE","Agent[05]":"ALIVE"},"roleMap":{"Agent[01]":"VILLAGER"},"remainTalkMap":{},"remainWhisperMap":{},"day":0,"agent":"Agent[01]"},"setting":{"roleNumMap":{"BODYGUARD":0,"MEDIUM":0,"POSSESSED":1,"SEER":1,"VILLAGER":2,"WEREWOLF":1},"playerNum":5,"maxTalk":3,"maxTalkTurn":15,"maxWhisper":3,"maxWhisperTurn":15,"maxSkip":3,"isEnableNoAttack":true,"isVoteVisible":false,"isTalkOnFirstDay":true,"responseTimeout":90000,"actionTimeout":60000,"maxRevote":1,"maxAttackRevote":1}}
-```
+具体例はログを参照してください。
 
 ### 囁きリクエスト (WHISPER) / トークリクエスト (TALK)
 
@@ -217,6 +211,4 @@
 **ゲームの現状態を示す情報 (info)**  
 なお、`roleMap` は自分以外も含めたすべてのエージェントの役職が含まれます。
 
-```
-    dummy_client.go:50: recv: {"request":"FINISH","info":{"statusMap":{"Agent[01]":"DEAD","Agent[02]":"DEAD","Agent[03]":"ALIVE","Agent[04]":"DEAD","Agent[05]":"DEAD"},"roleMap":{"Agent[01]":"VILLAGER","Agent[02]":"SEER","Agent[03]":"WEREWOLF","Agent[04]":"VILLAGER","Agent[05]":"POSSESSED"},"remainTalkMap":{},"remainWhisperMap":{},"day":5,"agent":"Agent[01]","executedAgent":"Agent[04]"}}
-```
+具体例はログを参照してください。

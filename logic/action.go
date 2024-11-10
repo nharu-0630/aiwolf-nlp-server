@@ -179,12 +179,16 @@ func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []mode
 
 func (g *Game) doWhisper() {
 	slog.Info("囁きフェーズを開始します", "id", g.ID, "day", g.CurrentDay)
+	g.GameStatuses[g.CurrentDay].ResetRemainWhisperMap(g.Settings.MaxWhisper)
 	g.conductCommunication(model.R_WHISPER)
+	g.GameStatuses[g.CurrentDay].ClearRemainWhisperMap()
 }
 
 func (g *Game) doTalk() {
 	slog.Info("トークフェーズを開始します", "id", g.ID, "day", g.CurrentDay)
+	g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalk)
 	g.conductCommunication(model.R_TALK)
+	g.GameStatuses[g.CurrentDay].ClearRemainTalkMap()
 }
 
 func (g *Game) conductCommunication(request model.Request) {
@@ -195,14 +199,12 @@ func (g *Game) conductCommunication(request model.Request) {
 	switch request {
 	case model.R_TALK:
 		agents = g.getAliveAgents()
-		g.GameStatuses[g.CurrentDay].ResetRemainTalkMap(g.Settings.MaxTalkTurn)
-		maxTurn = g.Settings.MaxTalk
+		maxTurn = g.Settings.MaxTalkTurn
 		remainMap = g.GameStatuses[g.CurrentDay].RemainTalkMap
 		talkList = &g.GameStatuses[g.CurrentDay].Talks
 	case model.R_WHISPER:
 		agents = g.getAliveWerewolves()
-		g.GameStatuses[g.CurrentDay].ResetRemainWhisperMap(g.Settings.MaxWhisperTurn)
-		maxTurn = g.Settings.MaxWhisper
+		maxTurn = g.Settings.MaxWhisperTurn
 		remainMap = g.GameStatuses[g.CurrentDay].RemainWhisperMap
 		talkList = &g.GameStatuses[g.CurrentDay].Whispers
 	}
@@ -215,7 +217,7 @@ func (g *Game) conductCommunication(request model.Request) {
 	rand.Shuffle(len(agents), func(i, j int) {
 		agents[i], agents[j] = agents[j], agents[i]
 	})
-	skipCountMap := make(map[model.Agent]int)
+	skipMap := make(map[model.Agent]int)
 	idx := 0
 
 	for i := 0; i < maxTurn; i++ {
@@ -224,7 +226,7 @@ func (g *Game) conductCommunication(request model.Request) {
 			if remainMap[*agent] == 0 {
 				continue
 			}
-			text := g.getTalkWhisperText(agent, request, skipCountMap, remainMap)
+			text := g.getTalkWhisperText(agent, request, skipMap, remainMap)
 			talk := model.Talk{
 				Idx:   idx,
 				Day:   g.GameStatuses[g.CurrentDay].Day,
@@ -240,7 +242,7 @@ func (g *Game) conductCommunication(request model.Request) {
 				remainMap[*agent] = 0
 				slog.Info("発言がオーバーであるため、残り発言回数を0にしました", "id", g.ID, "agent", agent.String())
 			}
-			slog.Info("発言を受信しました", "id", g.ID, "agent", agent.String(), "text", text)
+			slog.Info("発言を受信しました", "id", g.ID, "agent", agent.String(), "text", text, "skip", skipMap[*agent], "remain", remainMap[*agent])
 		}
 		if !cnt {
 			break
@@ -248,7 +250,7 @@ func (g *Game) conductCommunication(request model.Request) {
 	}
 }
 
-func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, skipCountMap map[model.Agent]int, remainMap map[model.Agent]int) string {
+func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, skipMap map[model.Agent]int, remainMap map[model.Agent]int) string {
 	text, err := g.requestToAgent(agent, request)
 	if text == model.T_FORCE_SKIP {
 		text = model.T_SKIP
@@ -259,12 +261,12 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 		slog.Warn("リクエストの送受信に失敗したため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
 	remainMap[*agent]--
-	if _, exists := skipCountMap[*agent]; !exists {
-		skipCountMap[*agent] = 0
+	if _, exists := skipMap[*agent]; !exists {
+		skipMap[*agent] = 0
 	}
 	if text == model.T_SKIP {
-		skipCountMap[*agent]++
-		if skipCountMap[*agent] >= g.Settings.MaxSkip {
+		skipMap[*agent]++
+		if skipMap[*agent] >= g.Settings.MaxSkip {
 			text = model.T_OVER
 			slog.Warn("スキップ回数が上限に達したため、発言をオーバーに置換しました", "id", g.ID, "agent", agent.String())
 		} else {
@@ -275,7 +277,7 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 		slog.Warn("強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
 	if text != model.T_OVER && text != model.T_SKIP && text != model.T_FORCE_SKIP {
-		skipCountMap[*agent] = 0
+		skipMap[*agent] = 0
 		slog.Info("発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました", "id", g.ID, "agent", agent.String())
 	}
 	return text
