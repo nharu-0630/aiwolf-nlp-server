@@ -65,7 +65,7 @@ func (g *Game) doAttack() {
 		} else if attacked != nil {
 			slog.Info("護衛されたため、襲撃結果を設定しません", "id", g.ID, "agent", attacked.Name)
 		} else {
-			slog.Warn("襲撃対象がいないため、襲撃結果を設定しません", "id", g.ID)
+			slog.Info("襲撃対象がいないため、襲撃結果を設定しません", "id", g.ID)
 		}
 	}
 	slog.Info("襲撃フェーズを終了します", "id", g.ID, "day", g.CurrentDay)
@@ -92,21 +92,25 @@ func (g *Game) doDivine() {
 func (g *Game) conductDivination(agent *model.Agent) {
 	slog.Info("占いアクションを開始します", "id", g.ID, "agent", agent.String())
 	target, err := g.findTargetByRequest(agent, model.R_DIVINE)
-	if err == nil {
-		if g.isAlive(target) {
-			g.GameStatuses[g.CurrentDay].DivineResult = &model.Judge{
-				Day:    g.GameStatuses[g.CurrentDay].Day,
-				Agent:  *agent,
-				Target: *target,
-				Result: target.Role.Species,
-			}
-			slog.Info("占い結果を設定しました", "id", g.ID, "target", target.String(), "result", target.Role.Species)
-		} else {
-			slog.Warn("占い対象が死亡しているため、占い結果を設定しません", "id", g.ID, "target", target.String())
-		}
-	} else {
+	if err != nil {
 		slog.Warn("占い対象が見つからなかったため、占い結果を設定しません", "id", g.ID)
+		return
 	}
+	if !g.isAlive(target) {
+		slog.Warn("占い対象が死亡しているため、占い結果を設定しません", "id", g.ID, "target", target.String())
+		return
+	}
+	if agent == target {
+		slog.Warn("占い対象が自分自身であるため、占い結果を設定しません", "id", g.ID, "target", target.String())
+		return
+	}
+	g.GameStatuses[g.CurrentDay].DivineResult = &model.Judge{
+		Day:    g.GameStatuses[g.CurrentDay].Day,
+		Agent:  *agent,
+		Target: *target,
+		Result: target.Role.Species,
+	}
+	slog.Info("占い結果を設定しました", "id", g.ID, "target", target.String(), "result", target.Role.Species)
 }
 
 func (g *Game) doGuard() {
@@ -122,20 +126,24 @@ func (g *Game) doGuard() {
 func (g *Game) conductGuard(agent *model.Agent) {
 	slog.Info("護衛アクションを実行します", "id", g.ID, "agent", agent.String())
 	target, err := g.findTargetByRequest(agent, model.R_GUARD)
-	if err == nil {
-		if g.isAlive(target) {
-			g.GameStatuses[g.CurrentDay].Guard = &model.Guard{
-				Day:    g.GameStatuses[g.CurrentDay].Day,
-				Agent:  *agent,
-				Target: *target,
-			}
-			slog.Info("護衛対象を設定しました", "id", g.ID, "target", target.String())
-		} else {
-			slog.Warn("護衛対象が死亡しているため、護衛対象を設定しません", "id", g.ID, "target", target.String())
-		}
-	} else {
+	if err != nil {
 		slog.Warn("護衛対象が見つからなかったため、護衛対象を設定しません", "id", g.ID)
+		return
 	}
+	if !g.isAlive(target) {
+		slog.Warn("護衛対象が死亡しているため、護衛対象を設定しません", "id", g.ID, "target", target.String())
+		return
+	}
+	if agent == target {
+		slog.Warn("護衛対象が自分自身であるため、護衛対象を設定しません", "id", g.ID, "target", target.String())
+		return
+	}
+	g.GameStatuses[g.CurrentDay].Guard = &model.Guard{
+		Day:    g.GameStatuses[g.CurrentDay].Day,
+		Agent:  *agent,
+		Target: *target,
+	}
+	slog.Info("護衛対象を設定しました", "id", g.ID, "target", target.String())
 }
 
 func (g *Game) executeVote() {
