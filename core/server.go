@@ -50,6 +50,7 @@ func NewServer(config model.Config) *Server {
 }
 
 func (s *Server) Run() {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	router.GET("/ws", func(c *gin.Context) {

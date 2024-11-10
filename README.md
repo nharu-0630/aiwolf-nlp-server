@@ -13,8 +13,8 @@
 ### Linux
 
 ```bash
-wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-linux-amd64
-wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
-chmod u+x ./aiwolf-nlp-server-linux-amd64
-./aiwolf-nlp-server-linux-amd64
+$ wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-linux-amd64
+$ wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
+$ chmod u+x ./aiwolf-nlp-server-linux-amd64
+$ ./aiwolf-nlp-server-linux-amd64
 ```
