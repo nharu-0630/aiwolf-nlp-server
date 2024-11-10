@@ -53,10 +53,10 @@ func (s Settings) MarshalJSON() ([]byte, error) {
 	}
 	type Alias Settings
 	return json.Marshal(&struct {
-		RoleNumMap map[string]int `json:"roleNumMap"`
 		*Alias
+		RoleNumMap map[string]int `json:"roleNumMap"`
 	}{
-		RoleNumMap: roleNumMap,
 		Alias:      (*Alias)(&s),
+		RoleNumMap: roleNumMap,
 	})
 }

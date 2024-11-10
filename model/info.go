@@ -28,13 +28,13 @@ func (i Info) MarshalJSON() ([]byte, error) {
 	}
 	type Alias Info
 	return json.Marshal(&struct {
+		*Alias
 		StatusMap map[string]Status `json:"statusMap"`
 		RoleMap   map[string]Role   `json:"roleMap"`
-		*Alias
 	}{
+		Alias:     (*Alias)(&i),
 		StatusMap: statusMap,
 		RoleMap:   roleMap,
-		Alias:     (*Alias)(&i),
 	})
 }
 
