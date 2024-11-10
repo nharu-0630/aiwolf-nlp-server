@@ -10,10 +10,11 @@
 
 ## 実行方法
 
-[Release](https://github.com/kano-lab/aiwolf-nlp-server/releases/latest) から環境に合ったバイナリをダウンロードしてください。  
-[default.yml](https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml) をダウンロードしてください。  
-必要に応じて設定を変更したうえで、以下のコマンドを実行してください。  
+### Linux
 
 ```bash
-./aiwolf-nlp-server -c default.yml
+wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-linux-amd64
+wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
+chmod u+x ./aiwolf-nlp-server-linux-amd64
+./aiwolf-nlp-server-linux-amd64
 ```

@@ -29,11 +29,11 @@ game:
     response: 90s # エージェントの生存確認のタイムアウト時間
 
 analysis_service:
-  output_dir: "./log" # 分析結果の出力ディレクトリ
+  output_dir: "./../log" # 分析結果の出力ディレクトリ
 
 api_service:
   enable: true # APIサービスを有効にするか
   publish_running_game: true # 進行中のゲームを公開するか
 
 match_optimizer:
-  output_path: "./log/match_optimizer.json" # マッチ履歴の出力ファイル
+  output_path: "./../log/match_optimizer.json" # マッチ履歴の出力ファイル

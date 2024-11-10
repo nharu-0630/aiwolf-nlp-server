@@ -9,7 +9,7 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "-c",
-                "${workspaceFolder}/config/default.yml"
+                "${workspaceFolder}/config/debug.yml"
             ],
         }
     ]
