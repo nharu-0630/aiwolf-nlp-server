@@ -143,6 +143,7 @@ func (mo *MatchOptimizer) UpdateTeam(team string) {
 	}
 	idx := len(mo.IdxTeamMap)
 	mo.IdxTeamMap[idx] = team
+	mo.save()
 }
 
 func (mo *MatchOptimizer) Initialize() error {
