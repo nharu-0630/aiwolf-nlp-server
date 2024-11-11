@@ -13,11 +13,52 @@
 
 ## 実行方法
 
+人狼知能コンテスト2024冬季 国内大会（自然言語部門） で使用予定の設定でサーバを起動する方法になります。
+
 ### Linux
 
 ```bash
-$ wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-linux-amd64
-$ wget https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
-$ chmod u+x ./aiwolf-nlp-server-linux-amd64
-$ ./aiwolf-nlp-server-linux-amd64
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-linux-amd64
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
+chmod u+x ./aiwolf-nlp-server-linux-amd64
+./aiwolf-nlp-server-linux-amd64
+```
+
+### Windows
+
+```bash
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-windows-amd64.exe
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
+.\aiwolf-nlp-server-windows-amd64.exe
+```
+
+### macOS (Intel)
+
+> [!NOTE]
+> 開発元が不明なアプリケーションとしてブロックされる場合があります。  
+> 下記サイトを参考に、実行許可を与えてください  
+> https://support.apple.com/ja-jp/guide/mac-help/mh40616/mac
+
+> [!WARNING]
+> 動作確認が取れていないため、動作しない可能性があります。
+
+```bash
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-darwin-amd64
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
+chmod u+x ./aiwolf-nlp-server-darwin-amd64
+./aiwolf-nlp-server-darwin-amd64
+```
+
+### macOS (Apple Silicon)
+
+> [!NOTE]
+> 開発元が不明なアプリケーションとしてブロックされる場合があります。  
+> 下記サイトを参考に、実行許可を与えてください  
+> https://support.apple.com/ja-jp/guide/mac-help/mh40616/mac
+
+```bash
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/aiwolf-nlp-server-darwin-arm64
+curl -LJO https://github.com/kano-lab/aiwolf-nlp-server/releases/latest/download/default.yml
+chmod u+x ./aiwolf-nlp-server-darwin-arm64
+./aiwolf-nlp-server-darwin-arm64
 ```
