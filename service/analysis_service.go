@@ -10,14 +10,7 @@ import (
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
-type AnalysisService interface {
-	TrackStartGame(id string, agents []*model.Agent)
-	TrackEndGame(id string, winSide model.Team)
-	TrackStartRequest(id string, agent model.Agent, request interface{})
-	TrackEndRequest(id string, agent model.Agent, response interface{})
-}
-
-type AnalysisServiceImpl struct {
+type AnalysisService struct {
 	gamesData     map[string]*GameData
 	outputDir     string
 	endGameStatus map[string]bool
@@ -31,15 +24,15 @@ type GameData struct {
 	requestMap   map[string]interface{}
 }
 
-func NewAnalysisService(config model.Config) *AnalysisServiceImpl {
-	return &AnalysisServiceImpl{
+func NewAnalysisService(config model.Config) *AnalysisService {
+	return &AnalysisService{
 		gamesData:     make(map[string]*GameData),
 		outputDir:     config.AnalysisService.OutputDir,
 		endGameStatus: make(map[string]bool),
 	}
 }
 
-func (a *AnalysisServiceImpl) TrackStartGame(id string, agents []*model.Agent) {
+func (a *AnalysisService) TrackStartGame(id string, agents []*model.Agent) {
 	gameData := &GameData{
 		agents:       make([]interface{}, 0),
 		entries:      make([]interface{}, 0),
@@ -61,7 +54,7 @@ func (a *AnalysisServiceImpl) TrackStartGame(id string, agents []*model.Agent) {
 	a.endGameStatus[id] = false
 }
 
-func (a *AnalysisServiceImpl) TrackEndGame(id string, winSide model.Team) {
+func (a *AnalysisService) TrackEndGame(id string, winSide model.Team) {
 	if gameData, exists := a.gamesData[id]; exists {
 		gameData.winSide = winSide
 		a.endGameStatus[id] = true
@@ -69,14 +62,14 @@ func (a *AnalysisServiceImpl) TrackEndGame(id string, winSide model.Team) {
 	}
 }
 
-func (a *AnalysisServiceImpl) TrackStartRequest(id string, agent model.Agent, packet model.Packet) {
+func (a *AnalysisService) TrackStartRequest(id string, agent model.Agent, packet model.Packet) {
 	if gameData, exists := a.gamesData[id]; exists {
 		gameData.timestampMap[agent.Name] = time.Now().UnixNano()
 		gameData.requestMap[agent.Name] = packet
 	}
 }
 
-func (a *AnalysisServiceImpl) TrackEndRequest(id string, agent model.Agent, response string, err error) {
+func (a *AnalysisService) TrackEndRequest(id string, agent model.Agent, response string, err error) {
 	if gameData, exists := a.gamesData[id]; exists {
 		timestamp := time.Now().UnixNano()
 		entry := map[string]interface{}{
@@ -101,7 +94,7 @@ func (a *AnalysisServiceImpl) TrackEndRequest(id string, agent model.Agent, resp
 	}
 }
 
-func (a *AnalysisServiceImpl) saveGameData(id string) {
+func (a *AnalysisService) saveGameData(id string) {
 	if gameData, exists := a.gamesData[id]; exists {
 		game := map[string]interface{}{
 			"game_id":  id,

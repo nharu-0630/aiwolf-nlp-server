@@ -18,10 +18,10 @@ type Game struct {
 	GameStatuses      map[int]*model.GameStatus
 	LastTalkIdxMap    map[*model.Agent]int
 	LastWhisperIdxMap map[*model.Agent]int
-	AnalysisService   *service.AnalysisServiceImpl
+	AnalysisService   *service.AnalysisService
 }
 
-func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
+func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection, analysisService *service.AnalysisService) *Game {
 	id := ulid.Make().String()
 	agents := util.CreateAgents(conns, settings.RoleNumMap)
 	gameStatus := model.NewInitializeGameStatus(agents)
@@ -41,7 +41,7 @@ func NewGame(config *model.Config, settings *model.Settings, conns []model.Conne
 	}
 }
 
-func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConns map[model.Role][]model.Connection, analysisService *service.AnalysisServiceImpl) *Game {
+func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConns map[model.Role][]model.Connection, analysisService *service.AnalysisService) *Game {
 	id := ulid.Make().String()
 	agents := util.CreateAgentsWithRole(roleMapConns)
 	gameStatus := model.NewInitializeGameStatus(agents)

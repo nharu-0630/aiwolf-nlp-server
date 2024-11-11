@@ -8,12 +8,12 @@ import (
 )
 
 type ApiService struct {
-	analysisService    *AnalysisServiceImpl
+	analysisService    *AnalysisService
 	publishRunningGame bool
 	mu                 sync.Mutex
 }
 
-func NewApiService(analysisService *AnalysisServiceImpl, config model.Config) *ApiService {
+func NewApiService(analysisService *AnalysisService, config model.Config) *ApiService {
 	return &ApiService{
 		analysisService:    analysisService,
 		publishRunningGame: config.ApiService.PublishRunningGame,

@@ -12,7 +12,7 @@ import (
 )
 
 func TestGame(t *testing.T) {
-	config, err := model.LoadConfigFromPath("../config/debug.yml")
+	config, err := model.LoadFromPath("../config/debug.yml")
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
 	}

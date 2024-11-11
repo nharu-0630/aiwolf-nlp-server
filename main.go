@@ -34,7 +34,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	config, err := model.LoadConfigFromPath(*configPath)
+	config, err := model.LoadFromPath(*configPath)
 	if err != nil {
 		panic(err)
 	}

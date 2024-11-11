@@ -22,7 +22,7 @@ type Server struct {
 	gameSettings    *model.Settings
 	games           []*logic.Game
 	mu              sync.RWMutex
-	analysisService *service.AnalysisServiceImpl
+	analysisService *service.AnalysisService
 	apiService      *service.ApiService
 }
 
