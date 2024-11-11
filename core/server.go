@@ -27,18 +27,7 @@ type Server struct {
 }
 
 func NewServer(config model.Config) *Server {
-	gameSettings, err := model.NewSettings(config)
-	if err != nil {
-		slog.Error("ゲーム設定の作成に失敗しました", "error", err)
-		return nil
-	}
-	matchOptimizer, err := NewMatchOptimizer(config)
-	if err != nil {
-		slog.Error("マッチオプティマイザの作成に失敗しました", "error", err)
-		return nil
-	}
-	analysisService := service.NewAnalysisService(config)
-	return &Server{
+	server := &Server{
 		config: config,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -46,12 +35,27 @@ func NewServer(config model.Config) *Server {
 			},
 		},
 		waitingRoom:     NewWaitingRoom(config),
-		matchOptimizer:  matchOptimizer,
-		gameSettings:    gameSettings,
 		games:           make([]*logic.Game, 0),
-		analysisService: analysisService,
-		apiService:      service.NewApiService(analysisService, config),
+		analysisService: service.NewAnalysisService(config),
 	}
+	gameSettings, err := model.NewSettings(config)
+	if err != nil {
+		slog.Error("ゲーム設定の作成に失敗しました", "error", err)
+		return nil
+	}
+	server.gameSettings = gameSettings
+	if config.MatchOptimizer.Enable {
+		matchOptimizer, err := NewMatchOptimizer(config)
+		if err != nil {
+			slog.Error("マッチオプティマイザの作成に失敗しました", "error", err)
+			return nil
+		}
+		server.matchOptimizer = matchOptimizer
+	}
+	if config.ApiService.Enable {
+		server.apiService = service.NewApiService(server.analysisService, config)
+	}
+	return server
 }
 
 func (s *Server) Run() {
@@ -87,12 +91,25 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	s.waitingRoom.AddConnection(connection.Team, *connection)
 
-	if !s.waitingRoom.IsReady() {
-		return
-	}
+	var game *logic.Game
+	if s.config.MatchOptimizer.Enable {
+		for team := range s.waitingRoom.connections {
+			s.matchOptimizer.UpdateTeam(team)
+		}
+		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(s.matchOptimizer.GetScheduledMatchesWithTeam())
+		if err != nil {
+			slog.Error("マッチオプティマイザからの接続情報の取得に失敗しました", "error", err)
+			return
+		}
+		game = logic.NewGameWithRole(&s.config, s.gameSettings, roleMapConns, s.analysisService)
+	} else {
+		if !s.waitingRoom.IsReady() {
+			return
+		}
 
-	connections := s.waitingRoom.GetConnections()
-	game := logic.NewGame(&s.config, s.gameSettings, connections, s.analysisService)
+		connections := s.waitingRoom.GetConnections()
+		game = logic.NewGame(&s.config, s.gameSettings, connections, s.analysisService)
+	}
 
 	s.mu.Lock()
 	s.games = append(s.games, game)
@@ -100,7 +117,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		winSide := game.Start()
-		if winSide != model.T_NONE {
+		if winSide != model.T_NONE && s.config.MatchOptimizer.Enable {
 			s.matchOptimizer.addEndedMatch(util.GetRoleTeamNamesMap(game.Agents))
 		}
 	}()

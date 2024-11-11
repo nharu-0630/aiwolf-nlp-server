@@ -56,6 +56,7 @@ type Config struct {
 		PublishRunningGame bool `yaml:"publish_running_game"`
 	} `yaml:"api_service"`
 	MatchOptimizer struct {
+		Enable     bool   `yaml:"enable"`
 		TeamCount  int    `yaml:"team_count"`
 		GameCount  int    `yaml:"game_count"`
 		OutputPath string `yaml:"output_path"`
