@@ -32,6 +32,11 @@ func NewServer(config model.Config) *Server {
 		slog.Error("ゲーム設定の作成に失敗しました", "error", err)
 		return nil
 	}
+	matchOptimizer, err := NewMatchOptimizer(config)
+	if err != nil {
+		slog.Error("マッチオプティマイザの作成に失敗しました", "error", err)
+		return nil
+	}
 	analysisService := service.NewAnalysisService(config)
 	return &Server{
 		config: config,
@@ -41,8 +46,8 @@ func NewServer(config model.Config) *Server {
 			},
 		},
 		waitingRoom:     NewWaitingRoom(config),
-		matchOptimizer:  NewMatchOptimizer(config),
-		gameSettings:    &gameSettings,
+		matchOptimizer:  matchOptimizer,
+		gameSettings:    gameSettings,
 		games:           make([]*logic.Game, 0),
 		analysisService: analysisService,
 		apiService:      service.NewApiService(analysisService, config),
@@ -96,7 +101,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		winSide := game.Start()
 		if winSide != model.T_NONE {
-			s.matchOptimizer.AddMatchHistory(util.GetRoleTeamNamesMap(game.Agents))
+			s.matchOptimizer.addEndedMatch(util.GetRoleTeamNamesMap(game.Agents))
 		}
 	}()
 }

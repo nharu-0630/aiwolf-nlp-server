@@ -22,12 +22,12 @@ type Settings struct {
 	MaxAttackRevote  int          `json:"maxAttackRevote"`
 }
 
-func NewSettings(config Config) (Settings, error) {
+func NewSettings(config Config) (*Settings, error) {
 	roleNumMap := Roles(config.Game.AgentCount)
 	if roleNumMap == nil {
-		return Settings{}, errors.New("対応する役職の人数がありません")
+		return nil, errors.New("対応する役職の人数がありません")
 	}
-	settings := Settings{
+	return &Settings{
 		PlayerNum:        config.Game.AgentCount,
 		RoleNumMap:       roleNumMap,
 		MaxTalk:          config.Game.Talk.MaxCount.PerAgent,
@@ -42,8 +42,7 @@ func NewSettings(config Config) (Settings, error) {
 		ActionTimeout:    int(config.Game.Timeout.Action.Milliseconds()),
 		MaxRevote:        config.Game.Vote.MaxCount,
 		MaxAttackRevote:  config.Game.Attack.MaxCount,
-	}
-	return settings, nil
+	}, nil
 }
 
 func (s Settings) MarshalJSON() ([]byte, error) {
