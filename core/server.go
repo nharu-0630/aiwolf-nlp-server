@@ -98,7 +98,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(s.matchOptimizer.GetScheduledMatchesWithTeam())
 		if err != nil {
-			slog.Error("マッチオプティマイザからの接続情報の取得に失敗しました", "error", err)
+			slog.Error("マッチオプティマイザからのマッチの取得に失敗しました", "error", err)
 			return
 		}
 		game = logic.NewGameWithRole(&s.config, s.gameSettings, roleMapConns, s.analysisService)

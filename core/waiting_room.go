@@ -50,7 +50,7 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[m
 	var roleMapConns = make(map[model.Role][]model.Connection)
 
 	if len(scheduledMatches) == 0 {
-		return nil, errors.New("スケジュールされたマッチングがありません")
+		return nil, errors.New("スケジュールされたマッチがありません")
 	}
 
 	var readyMatch = map[model.Role][]string{}
@@ -73,17 +73,16 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[m
 		}
 	}
 	if !ready {
-		return nil, errors.New("スケジュールされたマッチング内に不足しているチームがあります")
+		return nil, errors.New("スケジュールされたマッチ内に不足しているチームがあります")
 	}
+	slog.Info("スケジュールされたマッチを取得しました")
 
-	if ready {
-		for role, teams := range readyMatch {
-			for _, team := range teams {
-				roleMapConns[role] = append(roleMapConns[role], wr.connections[team][0])
-				wr.connections[team] = wr.connections[team][1:]
-				if len(wr.connections[team]) == 0 {
-					delete(wr.connections, team)
-				}
+	for role, teams := range readyMatch {
+		for _, team := range teams {
+			roleMapConns[role] = append(roleMapConns[role], wr.connections[team][0])
+			wr.connections[team] = wr.connections[team][1:]
+			if len(wr.connections[team]) == 0 {
+				delete(wr.connections, team)
 			}
 		}
 	}
