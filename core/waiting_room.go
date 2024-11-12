@@ -49,23 +49,35 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[m
 	defer wr.mu.Unlock()
 	var roleMapConns = make(map[model.Role][]model.Connection)
 
-	allTeamsReady := true
-	if len(scheduledMatches) > 0 {
-		for _, teams := range scheduledMatches[0] {
+	if len(scheduledMatches) == 0 {
+		return nil, errors.New("スケジュールされたマッチングがありません")
+	}
+
+	var readyMatch = map[model.Role][]string{}
+	ready := true
+	for _, match := range scheduledMatches {
+		for _, teams := range match {
 			for _, team := range teams {
 				if len(wr.connections[team]) == 0 {
-					allTeamsReady = false
+					ready = false
 					break
 				}
 			}
-			if !allTeamsReady {
+			if !ready {
 				break
 			}
 		}
+		if ready {
+			readyMatch = match
+			break
+		}
+	}
+	if !ready {
+		return nil, errors.New("スケジュールされたマッチング内に不足しているチームがあります")
 	}
 
-	if allTeamsReady && len(scheduledMatches) > 0 {
-		for role, teams := range scheduledMatches[0] {
+	if ready {
+		for role, teams := range readyMatch {
 			for _, team := range teams {
 				roleMapConns[role] = append(roleMapConns[role], wr.connections[team][0])
 				wr.connections[team] = wr.connections[team][1:]
@@ -74,24 +86,6 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[m
 				}
 			}
 		}
-	} else {
-		for _, match := range scheduledMatches {
-			for role, teams := range match {
-				for _, team := range teams {
-					if len(wr.connections[team]) > 0 {
-						roleMapConns[role] = append(roleMapConns[role], wr.connections[team][0])
-						wr.connections[team] = wr.connections[team][1:]
-						if len(wr.connections[team]) == 0 {
-							delete(wr.connections, team)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if len(roleMapConns) != wr.agentCount {
-		return nil, errors.New("スケジュールされたマッチング内に不足しているチームがあります")
 	}
 	return roleMapConns, nil
 }

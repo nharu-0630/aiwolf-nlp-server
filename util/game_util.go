@@ -68,9 +68,11 @@ func CreateAgents(conns []model.Connection, roles map[model.Role]int) []*model.A
 
 func CreateAgentsWithRole(roleMapConns map[model.Role][]model.Connection) []*model.Agent {
 	agents := make([]*model.Agent, 0)
+	i := 0
 	for role, conns := range roleMapConns {
-		for i, conn := range conns {
+		for _, conn := range conns {
 			agent, err := model.NewAgent(i+1, role, conn)
+			i++
 			if err != nil {
 				slog.Error("エージェントの作成に失敗しました", "error", err)
 			}
@@ -119,7 +121,7 @@ func getMaxCountCandidates(counter map[*model.Agent]int) []*model.Agent {
 func GetRoleTeamNamesMap(agents []*model.Agent) map[model.Role][]string {
 	roleTeamNamesMap := make(map[model.Role][]string)
 	for _, a := range agents {
-		roleTeamNamesMap[a.Role] = append(roleTeamNamesMap[a.Role], a.Name)
+		roleTeamNamesMap[a.Role] = append(roleTeamNamesMap[a.Role], a.Team)
 	}
 	return roleTeamNamesMap
 }

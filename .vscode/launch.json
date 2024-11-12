@@ -2,14 +2,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch aiwolf-nlp-server",
+            "name": "Launch aiwolf-nlp-server (default)",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "-c",
-                "${workspaceFolder}/config/debug.yml"
+                "${workspaceFolder}/config/default.yml"
+            ],
+        },
+        {
+            "name": "Launch aiwolf-nlp-server (talk / whisper skip)",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "args": [
+                "-c",
+                "${workspaceFolder}/config/fast_debug.yml"
             ],
         }
     ]

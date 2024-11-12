@@ -1,5 +1,5 @@
-# 大会向け
-# マッチオプティマイザの設定を必要に応じて変更してください
+# 手動テスト向け
+# トークと囁きフェーズをスキップ
 
 server:
   web_socket:
@@ -10,16 +10,16 @@ server:
 game:
   agent_count: 5 # 1ゲームあたりのエージェント数
   vote_visibility: false # 投票の結果を公開するか
-  talk_on_first_day: true # 1日目の発言を許可するか
+  talk_on_first_day: false # 1日目の発言を許可するか
   max_continue_error_ratio: 0.2 # ゲームを継続するエラーエージェントの最大割合
   talk:
     max_count:
       per_agent: 5 # 1日あたりの1エージェントの最大発言回数
-      per_day: 20 # 1日あたりの全体の発言回数
+      per_day: 0 # 1日あたりの全体の発言回数
   whisper:
     max_count:
       per_agent: 5 # 1日あたりの1エージェントの最大囁き回数
-      per_day: 20 # 1日あたりの全体の囁き回数
+      per_day: 0 # 1日あたりの全体の囁き回数
   skip:
     max_count: 0 # 1日あたりの1エージェントの最大スキップ回数
   vote:

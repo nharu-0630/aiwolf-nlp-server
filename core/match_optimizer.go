@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
+	"github.com/kano-lab/aiwolf-nlp-server/util"
 	"golang.org/x/exp/rand"
 )
 
@@ -260,7 +261,6 @@ func (mo *MatchOptimizer) findBestTeam(
 ) int {
 	bestTeam := -1
 	minDeviation := -1.0
-
 	for _, team := range availableTeams {
 		if usedTeams[team] {
 			continue
@@ -286,7 +286,6 @@ func (mo *MatchOptimizer) findBestTeam(
 			minDeviation = deviation
 		}
 	}
-
 	return bestTeam
 }
 
@@ -305,6 +304,14 @@ func (mo *MatchOptimizer) addEndedMatch(match map[model.Role][]string) {
 		idxMatch[role] = make([]int, len(teams))
 		for i, team := range teams {
 			idxMatch[role][i] = mo.teamToIdx(team)
+		}
+	}
+
+	for i, scheduledMatch := range mo.ScheduledMatches {
+		if util.EqualMatch(scheduledMatch, idxMatch) {
+			mo.ScheduledMatches = append(mo.ScheduledMatches[:i], mo.ScheduledMatches[i+1:]...)
+			slog.Info("スケジュールされたマッチから削除しました", "length", len(mo.ScheduledMatches))
+			break
 		}
 	}
 	mo.EndedMatches = append(mo.EndedMatches, idxMatch)
