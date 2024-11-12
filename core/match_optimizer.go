@@ -14,7 +14,7 @@ import (
 type MatchOptimizer struct {
 	TeamCount        int                    `json:"team_count"`
 	GameCount        int                    `json:"game_count"`
-	OutputPath       string                 `json:"output_path"`
+	outputPath       string                 `json:"-"`
 	RoleNumMap       map[model.Role]int     `json:"role_num_map"`
 	IdxTeamMap       map[int]string         `json:"idx_team_map"`
 	ScheduledMatches []map[model.Role][]int `json:"scheduled_matches"`
@@ -99,6 +99,7 @@ func NewMatchOptimizer(config model.Config) (*MatchOptimizer, error) {
 		slog.Error("マッチオプティマイザのパースに失敗しました", "error", err)
 		return nil, err
 	}
+	mo.outputPath = config.MatchOptimizer.OutputPath
 	mo.save()
 	return &mo, nil
 }
@@ -112,7 +113,7 @@ func NewMatchOptimizerFromConfig(config model.Config) (*MatchOptimizer, error) {
 	mo := &MatchOptimizer{
 		TeamCount:  config.MatchOptimizer.TeamCount,
 		GameCount:  config.MatchOptimizer.GameCount,
-		OutputPath: config.MatchOptimizer.OutputPath,
+		outputPath: config.MatchOptimizer.OutputPath,
 		RoleNumMap: roleNumMap,
 		IdxTeamMap: map[int]string{},
 	}
@@ -316,11 +317,11 @@ func (mo *MatchOptimizer) save() error {
 	if err != nil {
 		return err
 	}
-	dir := filepath.Dir(mo.OutputPath)
+	dir := filepath.Dir(mo.outputPath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		os.Mkdir(dir, 0755)
 	}
-	file, err := os.Create(mo.OutputPath)
+	file, err := os.Create(mo.outputPath)
 	if err != nil {
 		return err
 	}
