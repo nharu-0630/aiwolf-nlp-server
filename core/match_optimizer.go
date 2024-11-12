@@ -118,11 +118,11 @@ func NewMatchOptimizerFromConfig(config model.Config) (*MatchOptimizer, error) {
 		RoleNumMap: roleNumMap,
 		IdxTeamMap: map[int]string{},
 	}
-	mo.Initialize()
+	mo.initialize()
 	return mo, nil
 }
 
-func (mo *MatchOptimizer) GetScheduledMatchesWithTeam() []map[model.Role][]string {
+func (mo *MatchOptimizer) getScheduledMatchesWithTeam() []map[model.Role][]string {
 	matches := []map[model.Role][]string{}
 	for _, match := range mo.ScheduledMatches {
 		idxMatch := make(map[model.Role][]string)
@@ -137,7 +137,7 @@ func (mo *MatchOptimizer) GetScheduledMatchesWithTeam() []map[model.Role][]strin
 	return matches
 }
 
-func (mo *MatchOptimizer) UpdateTeam(team string) {
+func (mo *MatchOptimizer) updateTeam(team string) {
 	for _, t := range mo.IdxTeamMap {
 		if t == team {
 			return
@@ -148,7 +148,7 @@ func (mo *MatchOptimizer) UpdateTeam(team string) {
 	mo.save()
 }
 
-func (mo *MatchOptimizer) Initialize() error {
+func (mo *MatchOptimizer) initialize() error {
 	slog.Info("マッチオプティマイザを初期化します")
 	mo.EndedMatches = []map[model.Role][]int{}
 

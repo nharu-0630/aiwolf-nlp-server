@@ -94,20 +94,20 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	var game *logic.Game
 	if s.config.MatchOptimizer.Enable {
 		for team := range s.waitingRoom.connections {
-			s.matchOptimizer.UpdateTeam(team)
+			s.matchOptimizer.updateTeam(team)
 		}
-		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(s.matchOptimizer.GetScheduledMatchesWithTeam())
+		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(s.matchOptimizer.getScheduledMatchesWithTeam())
 		if err != nil {
-			slog.Error("マッチオプティマイザからのマッチの取得に失敗しました", "error", err)
+			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
 			return
 		}
 		game = logic.NewGameWithRole(&s.config, s.gameSettings, roleMapConns, s.analysisService)
 	} else {
-		if !s.waitingRoom.IsReady() {
+		connections, err := s.waitingRoom.GetConnections()
+		if err != nil {
+			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
 			return
 		}
-
-		connections := s.waitingRoom.GetConnections()
 		game = logic.NewGame(&s.config, s.gameSettings, connections, s.analysisService)
 	}
 

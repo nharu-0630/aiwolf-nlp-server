@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"log/slog"
+	"math/rand/v2"
 	"sync"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
@@ -28,20 +29,6 @@ func (wr *WaitingRoom) AddConnection(team string, connection model.Connection) {
 	defer wr.mu.Unlock()
 	wr.connections[team] = append(wr.connections[team], connection)
 	slog.Info("新しいクライアントが待機部屋に追加されました", "team", team, "remote_addr", connection.Conn.RemoteAddr().String())
-}
-
-func (wr *WaitingRoom) IsReady() bool {
-	wr.mu.RLock()
-	defer wr.mu.RUnlock()
-	if wr.selfMatch {
-		for _, conns := range wr.connections {
-			if len(conns) >= wr.agentCount {
-				return true
-			}
-		}
-		return false
-	}
-	return len(wr.connections) == wr.agentCount
 }
 
 func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[model.Role][]string) (map[model.Role][]model.Connection, error) {
@@ -75,7 +62,7 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[m
 	if !ready {
 		return nil, errors.New("スケジュールされたマッチ内に不足しているチームがあります")
 	}
-	slog.Info("スケジュールされたマッチを取得しました")
+	slog.Info("スケジュールされたマッチの接続を取得しました")
 
 	for role, teams := range readyMatch {
 		for _, team := range teams {
@@ -89,10 +76,12 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[m
 	return roleMapConns, nil
 }
 
-func (wr *WaitingRoom) GetConnections() []model.Connection {
+func (wr *WaitingRoom) GetConnections() ([]model.Connection, error) {
 	wr.mu.Lock()
 	defer wr.mu.Unlock()
+
 	connections := []model.Connection{}
+	ready := false
 	if wr.selfMatch {
 		for team, conns := range wr.connections {
 			if len(conns) >= wr.agentCount {
@@ -101,16 +90,34 @@ func (wr *WaitingRoom) GetConnections() []model.Connection {
 				if len(wr.connections[team]) == 0 {
 					delete(wr.connections, team)
 				}
+				ready = true
+				break
 			}
 		}
-		return connections
-	}
-	for team, conns := range wr.connections {
-		connections = append(connections, conns[0])
-		wr.connections[team] = conns[1:]
-		if len(wr.connections[team]) == 0 {
-			delete(wr.connections, team)
+	} else {
+		if len(wr.connections) >= wr.agentCount {
+			var teams []string
+			for team := range wr.connections {
+				teams = append(teams, team)
+			}
+			rand.Shuffle(len(teams), func(i, j int) {
+				teams[i], teams[j] = teams[j], teams[i]
+			})
+			for _, team := range teams[:wr.agentCount] {
+				conns := wr.connections[team]
+				connections = append(connections, conns[0])
+				wr.connections[team] = conns[1:]
+				if len(wr.connections[team]) == 0 {
+					delete(wr.connections, team)
+				}
+			}
+			ready = true
 		}
 	}
-	return connections
+
+	if !ready {
+		return nil, errors.New("待機部屋内の接続が不足しています")
+	}
+	slog.Info("マッチの接続を取得しました")
+	return connections, nil
 }
