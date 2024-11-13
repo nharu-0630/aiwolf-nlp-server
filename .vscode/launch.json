@@ -20,7 +20,7 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "-c",
-                "${workspaceFolder}/config/fast_debug.yml"
+                "${workspaceFolder}/config/skip.yml"
             ],
         }
     ]
