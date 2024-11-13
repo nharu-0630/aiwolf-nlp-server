@@ -77,7 +77,6 @@ func (g *Game) Start() model.Team {
 	}
 	if winSide == model.T_NONE {
 		slog.Warn("エラーが多発したため、ゲームを終了します", "id", g.ID)
-		return model.T_NONE
 	}
 	g.requestToEveryone(model.R_FINISH)
 	g.closeAllAgents()
