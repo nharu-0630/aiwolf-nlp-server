@@ -49,6 +49,7 @@ type Config struct {
 		} `yaml:"timeout"`
 	} `yaml:"game"`
 	AnalysisService struct {
+		Enable    bool   `yaml:"enable"`
 		OutputDir string `yaml:"output_dir"`
 	} `yaml:"analysis_service"`
 	ApiService struct {

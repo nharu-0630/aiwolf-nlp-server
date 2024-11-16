@@ -21,7 +21,7 @@ type Game struct {
 	AnalysisService   *service.AnalysisService
 }
 
-func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection, analysisService *service.AnalysisService) *Game {
+func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection) *Game {
 	id := ulid.Make().String()
 	agents := util.CreateAgents(conns, settings.RoleNumMap)
 	gameStatus := model.NewInitializeGameStatus(agents)
@@ -37,11 +37,10 @@ func NewGame(config *model.Config, settings *model.Settings, conns []model.Conne
 		GameStatuses:      gameStatuses,
 		LastTalkIdxMap:    make(map[*model.Agent]int),
 		LastWhisperIdxMap: make(map[*model.Agent]int),
-		AnalysisService:   analysisService,
 	}
 }
 
-func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConns map[model.Role][]model.Connection, analysisService *service.AnalysisService) *Game {
+func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConns map[model.Role][]model.Connection) *Game {
 	id := ulid.Make().String()
 	agents := util.CreateAgentsWithRole(roleMapConns)
 	gameStatus := model.NewInitializeGameStatus(agents)
@@ -57,13 +56,18 @@ func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConn
 		GameStatuses:      gameStatuses,
 		LastTalkIdxMap:    make(map[*model.Agent]int),
 		LastWhisperIdxMap: make(map[*model.Agent]int),
-		AnalysisService:   analysisService,
 	}
+}
+
+func (g *Game) SetAnalysisService(analysisService *service.AnalysisService) {
+	g.AnalysisService = analysisService
 }
 
 func (g *Game) Start() model.Team {
 	slog.Info("ゲームを開始します", "id", g.ID)
-	g.AnalysisService.TrackStartGame(g.ID, g.Agents)
+	if g.AnalysisService != nil {
+		g.AnalysisService.TrackStartGame(g.ID, g.Agents)
+	}
 	g.requestToEveryone(model.R_INITIALIZE)
 	var winSide model.Team = model.T_NONE
 	for winSide == model.T_NONE && util.CalcHasErrorAgents(g.Agents) < int(float64(len(g.Agents))*g.Config.Game.MaxContinueErrorRatio) {
@@ -80,7 +84,9 @@ func (g *Game) Start() model.Team {
 	}
 	g.requestToEveryone(model.R_FINISH)
 	g.closeAllAgents()
-	g.AnalysisService.TrackEndGame(g.ID, winSide)
+	if g.AnalysisService != nil {
+		g.AnalysisService.TrackEndGame(g.ID, winSide)
+	}
 	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
 	return winSide
 }

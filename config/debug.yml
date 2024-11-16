@@ -33,6 +33,7 @@ game:
     response: 120s # エージェントの生存確認のタイムアウト時間
 
 analysis_service:
+  enable: true # 分析サービスを有効にするか
   output_dir: "./../log" # 分析結果の出力ディレクトリ
 
 api_service:

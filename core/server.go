@@ -34,9 +34,8 @@ func NewServer(config model.Config) *Server {
 				return true
 			},
 		},
-		waitingRoom:     NewWaitingRoom(config),
-		games:           make([]*logic.Game, 0),
-		analysisService: service.NewAnalysisService(config),
+		waitingRoom: NewWaitingRoom(config),
+		games:       make([]*logic.Game, 0),
 	}
 	gameSettings, err := model.NewSettings(config)
 	if err != nil {
@@ -44,6 +43,12 @@ func NewServer(config model.Config) *Server {
 		return nil
 	}
 	server.gameSettings = gameSettings
+	if config.AnalysisService.Enable {
+		server.analysisService = service.NewAnalysisService(config)
+	}
+	if config.ApiService.Enable {
+		server.apiService = service.NewApiService(server.analysisService, config)
+	}
 	if config.MatchOptimizer.Enable {
 		matchOptimizer, err := NewMatchOptimizer(config)
 		if err != nil {
@@ -51,9 +56,6 @@ func NewServer(config model.Config) *Server {
 			return nil
 		}
 		server.matchOptimizer = matchOptimizer
-	}
-	if config.ApiService.Enable {
-		server.apiService = service.NewApiService(server.analysisService, config)
 	}
 	return server
 }
@@ -101,14 +103,17 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
 			return
 		}
-		game = logic.NewGameWithRole(&s.config, s.gameSettings, roleMapConns, s.analysisService)
+		game = logic.NewGameWithRole(&s.config, s.gameSettings, roleMapConns)
 	} else {
 		connections, err := s.waitingRoom.GetConnections()
 		if err != nil {
 			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
 			return
 		}
-		game = logic.NewGame(&s.config, s.gameSettings, connections, s.analysisService)
+		game = logic.NewGame(&s.config, s.gameSettings, connections)
+	}
+	if s.analysisService != nil {
+		game.SetAnalysisService(s.analysisService)
 	}
 
 	s.mu.Lock()
