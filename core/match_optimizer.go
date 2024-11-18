@@ -13,9 +13,9 @@ import (
 )
 
 type MatchOptimizer struct {
+	outputPath       string                 `json:"-"`
 	TeamCount        int                    `json:"team_count"`
 	GameCount        int                    `json:"game_count"`
-	outputPath       string                 `json:"-"`
 	RoleNumMap       map[model.Role]int     `json:"role_num_map"`
 	IdxTeamMap       map[int]string         `json:"idx_team_map"`
 	ScheduledMatches []map[model.Role][]int `json:"scheduled_matches"`
@@ -140,11 +140,17 @@ func (mo *MatchOptimizer) getScheduledMatchesWithTeam() []map[model.Role][]strin
 func (mo *MatchOptimizer) updateTeam(team string) {
 	for _, t := range mo.IdxTeamMap {
 		if t == team {
+			slog.Info("チームが既に登録されています", "team", team)
 			return
 		}
 	}
 	idx := len(mo.IdxTeamMap)
+	if idx >= mo.TeamCount {
+		slog.Warn("チーム数が上限に達しているため追加できません", "team", team)
+		return
+	}
 	mo.IdxTeamMap[idx] = team
+	slog.Info("チームを追加しました", "team", team, "idx", idx)
 	mo.save()
 }
 
