@@ -16,12 +16,13 @@ import (
 )
 
 type DummyClient struct {
-	conn      *websocket.Conn
-	done      chan struct{}
-	role      *model.Role
-	info      map[string]interface{}
-	setting   map[string]interface{}
-	talkIndex int
+	conn        *websocket.Conn
+	done        chan struct{}
+	role        model.Role
+	info        map[string]interface{}
+	setting     map[string]interface{}
+	talkIndex   int
+	prevRequest model.Request
 }
 
 func NewDummyClient(u url.URL, t *testing.T) (*DummyClient, error) {
@@ -30,12 +31,13 @@ func NewDummyClient(u url.URL, t *testing.T) (*DummyClient, error) {
 		return nil, fmt.Errorf("dial: %v", err)
 	}
 	client := &DummyClient{
-		conn:      c,
-		done:      make(chan struct{}),
-		role:      nil,
-		info:      make(map[string]interface{}),
-		setting:   make(map[string]interface{}),
-		talkIndex: 0,
+		conn:        c,
+		done:        make(chan struct{}),
+		role:        model.Role{},
+		info:        make(map[string]interface{}),
+		setting:     make(map[string]interface{}),
+		talkIndex:   0,
+		prevRequest: model.Request{},
 	}
 	go client.listen(t)
 	return client, nil
@@ -55,13 +57,19 @@ func (dc *DummyClient) listen(t *testing.T) {
 		}
 		t.Logf("recv: %s", message)
 
-		var received map[string]interface{}
-		if err := json.Unmarshal(message, &received); err != nil {
+		var recv map[string]interface{}
+		if err := json.Unmarshal(message, &recv); err != nil {
 			t.Logf("unmarshal: %v", err)
 			continue
 		}
 
-		resp := dc.handleRequest(received)
+		request := model.RequestFromString(recv["request"].(string))
+		resp, err := dc.handleRequest(request, recv)
+		if err != nil {
+			t.Error(err)
+		}
+		dc.prevRequest = request
+
 		if resp != "" {
 			err = dc.conn.WriteMessage(websocket.TextMessage, []byte(resp))
 			if err != nil {
@@ -77,105 +85,123 @@ func (dc *DummyClient) listen(t *testing.T) {
 	}
 }
 
-func (dc *DummyClient) setInfo(recv map[string]interface{}) {
+func (dc *DummyClient) setInfo(recv map[string]interface{}) error {
 	if info, ok := recv["info"].(map[string]interface{}); ok {
 		dc.info = info
-		if dc.role == nil {
+		if dc.role.String() == "" {
 			if roleMap, ok := info["roleMap"].(map[string]interface{}); ok {
 				for _, v := range roleMap {
-					role := model.RoleFromString(v.(string))
-					dc.role = &role
+					dc.role = model.RoleFromString(v.(string))
 					break
 				}
 			}
 		}
 	} else {
-		panic(errors.New("info not found"))
+		return errors.New("info not found")
 	}
+	return nil
 }
 
-func (dc *DummyClient) setSetting(recv map[string]interface{}) {
+func (dc *DummyClient) setSetting(recv map[string]interface{}) error {
 	if setting, ok := recv["setting"].(map[string]interface{}); ok {
 		dc.setting = setting
 	} else {
-		panic(errors.New("setting not found"))
+		return errors.New("setting not found")
 	}
+	return nil
 }
 
-func (dc *DummyClient) handleName(_ map[string]interface{}) string {
+func (dc *DummyClient) handleName(_ map[string]interface{}) (string, error) {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyz"
 	b := make([]byte, 8)
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
-	return string(b)
+	return string(b), nil
 }
 
-func (dc *DummyClient) handleInitialize(recv map[string]interface{}) string {
-	dc.setInfo(recv)
-	dc.setSetting(recv)
-	return ""
+func (dc *DummyClient) handleInitialize(recv map[string]interface{}) (string, error) {
+	err := dc.setInfo(recv)
+	if err != nil {
+		return "", err
+	}
+	err = dc.setSetting(recv)
+	if err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
-func (dc *DummyClient) handleCommunication(recv map[string]interface{}) string {
+func (dc *DummyClient) handleCommunication(recv map[string]interface{}) (string, error) {
 	request := recv["request"].(string)
 	if _, ok := recv[strings.ToLower(request)+"History"].([]interface{}); ok {
 	} else {
-		panic(errors.New("history not found"))
+		return "", errors.New("history not found")
 	}
 	dc.talkIndex++
 	if dc.talkIndex < 3 {
-		return fmt.Sprintf("%x", md5.Sum([]byte(time.Now().String())))
+		return fmt.Sprintf("%x", md5.Sum([]byte(time.Now().String()))), nil
 	}
-	return model.T_OVER
+	return model.T_OVER, nil
 }
 
-func (dc *DummyClient) handleDailyFinish(recv map[string]interface{}) string {
+func (dc *DummyClient) handleTarget(_ map[string]interface{}) (string, error) {
+	if statusMap, ok := dc.info["statusMap"].(map[string]interface{}); ok {
+		for k, v := range statusMap {
+			if v == model.S_ALIVE.String() {
+				return k, nil
+			}
+		}
+		return "", errors.New("target not found")
+	}
+	return "", errors.New("statusMap not found")
+}
+
+func (dc *DummyClient) handleDailyFinish(recv map[string]interface{}) (string, error) {
 	if _, ok := recv["talkHistory"].([]interface{}); ok {
 	} else {
-		panic(errors.New("talkHistory not found"))
+		return "", errors.New("talkHistory not found")
 	}
-	if dc.role == &model.R_WEREWOLF {
+	if dc.role == model.R_WEREWOLF {
 		if _, ok := recv["whisperHistory"].([]interface{}); ok {
 		} else {
-			panic(errors.New("whisperHistory not found"))
+			return "", errors.New("whisperHistory not found")
+		}
+	} else {
+		if _, ok := recv["whisperHistory"]; ok {
+			return "", errors.New("whisperHistory found")
 		}
 	}
-	return ""
+	return "", nil
 }
 
-func (dc *DummyClient) handleFinish(recv map[string]interface{}) string {
-	dc.setInfo(recv)
-	return ""
-}
-
-func (dc *DummyClient) handleRequest(recv map[string]interface{}) string {
-	if request, ok := recv["request"].(string); ok {
-		switch request {
-		case "NAME":
-			return dc.handleName(recv)
-		case "INITIALIZE", "DAILY_INITIALIZE":
-			return dc.handleInitialize(recv)
-		case "TALK", "WHISPER":
-			return dc.handleCommunication(recv)
-		case "VOTE", "DIVINE", "GUARD", "ATTACK":
-			if statusMap, ok := dc.info["statusMap"].(map[string]interface{}); ok {
-				for k, v := range statusMap {
-					if v == "ALIVE" {
-						return k
-					}
-				}
-			} else {
-				panic(errors.New("statusMap not found"))
-			}
-		case "DAILY_FINISH":
-			dc.talkIndex = 0
-			return dc.handleDailyFinish(recv)
-		case "FINISH":
-			return dc.handleFinish(recv)
-		}
+func (dc *DummyClient) handleFinish(recv map[string]interface{}) (string, error) {
+	err := dc.setInfo(recv)
+	if err != nil {
+		return "", err
 	}
-	return "Invalid request"
+	return "", nil
+}
+
+func (dc *DummyClient) handleRequest(request model.Request, recv map[string]interface{}) (string, error) {
+	switch request {
+	case model.R_NAME:
+		return dc.handleName(recv)
+	case model.R_INITIALIZE:
+		return dc.handleInitialize(recv)
+	case model.R_DAILY_INITIALIZE:
+		return dc.handleInitialize(recv)
+	case model.R_TALK, model.R_WHISPER:
+		return dc.handleCommunication(recv)
+	case model.R_VOTE, model.R_DIVINE, model.R_GUARD, model.R_ATTACK:
+		return dc.handleTarget(recv)
+	case model.R_DAILY_FINISH:
+		dc.talkIndex = 0
+		return dc.handleDailyFinish(recv)
+	case model.R_FINISH:
+		return dc.handleFinish(recv)
+	}
+	return "", errors.New("request not found")
 }
 
 func (dc *DummyClient) Close() {
