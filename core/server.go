@@ -93,6 +93,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	s.waitingRoom.AddConnection(connection.Team, *connection)
 
+	s.mu.Lock()
 	var game *logic.Game
 	if s.config.MatchOptimizer.Enable {
 		for team := range s.waitingRoom.connections {
@@ -102,6 +103,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(matches)
 		if err != nil {
 			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
+			s.mu.Unlock()
 			return
 		}
 		game = logic.NewGameWithRole(&s.config, s.gameSettings, roleMapConns)
@@ -109,6 +111,7 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		connections, err := s.waitingRoom.GetConnections()
 		if err != nil {
 			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
+			s.mu.Unlock()
 			return
 		}
 		game = logic.NewGame(&s.config, s.gameSettings, connections)
@@ -116,8 +119,6 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	if s.analysisService != nil {
 		game.SetAnalysisService(s.analysisService)
 	}
-
-	s.mu.Lock()
 	s.games = append(s.games, game)
 	s.mu.Unlock()
 

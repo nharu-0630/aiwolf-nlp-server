@@ -69,6 +69,7 @@ func TestInfiniteGame(t *testing.T) {
 	}
 	if _, exists := os.LookupEnv("GITHUB_ACTIONS"); exists {
 		config.Server.WebSocket.Host = model.WebSocketExternalHost
+		return
 	}
 	go func() {
 		server := core.NewServer(*config)

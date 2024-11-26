@@ -7,12 +7,14 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 	"github.com/kano-lab/aiwolf-nlp-server/util"
 )
 
 type MatchOptimizer struct {
+	mu               sync.RWMutex
 	outputPath       string                 `json:"-"`
 	InfiniteLoop     bool                   `json:"infinite_loop"`
 	TeamCount        int                    `json:"team_count"`
@@ -126,6 +128,8 @@ func NewMatchOptimizerFromConfig(config model.Config) (*MatchOptimizer, error) {
 }
 
 func (mo *MatchOptimizer) getMatches() []map[model.Role][]string {
+	mo.mu.Lock()
+	defer mo.mu.Unlock()
 	count := 0
 	for _, match := range mo.ScheduledMatches {
 		if match.Weight > 0.0 {
@@ -147,6 +151,8 @@ func (mo *MatchOptimizer) getMatches() []map[model.Role][]string {
 }
 
 func (mo *MatchOptimizer) updateTeam(team string) {
+	mo.mu.Lock()
+	defer mo.mu.Unlock()
 	for _, t := range mo.IdxTeamMap {
 		if t == team {
 			slog.Info("チームが既に登録されています", "team", team)
@@ -164,6 +170,8 @@ func (mo *MatchOptimizer) updateTeam(team string) {
 }
 
 func (mo *MatchOptimizer) initialize() error {
+	mo.mu.Lock()
+	defer mo.mu.Unlock()
 	slog.Info("マッチオプティマイザを初期化します")
 	mo.EndedMatches = []map[model.Role][]int{}
 
@@ -215,6 +223,8 @@ func (mo *MatchOptimizer) initialize() error {
 }
 
 func (mo *MatchOptimizer) append() error {
+	mo.mu.Lock()
+	defer mo.mu.Unlock()
 	theoretical, roles := util.CalcTheoretical(mo.RoleNumMap, mo.GameCount, mo.TeamCount)
 	slog.Info("各役職の理論値を計算しました", "theoretical", theoretical)
 
@@ -263,6 +273,8 @@ func (mo *MatchOptimizer) append() error {
 }
 
 func (mo *MatchOptimizer) setMatchEnd(match map[model.Role][]string) {
+	mo.mu.Lock()
+	defer mo.mu.Unlock()
 	idxMatch := util.TeamNameMatchToIdxMatch(mo.IdxTeamMap, match)
 
 	for i, scheduledMatch := range mo.ScheduledMatches {
@@ -278,6 +290,8 @@ func (mo *MatchOptimizer) setMatchEnd(match map[model.Role][]string) {
 }
 
 func (mo *MatchOptimizer) setMatchWeight(match map[model.Role][]string, weight float64) {
+	mo.mu.Lock()
+	defer mo.mu.Unlock()
 	idxMatch := util.TeamNameMatchToIdxMatch(mo.IdxTeamMap, match)
 
 	for i, scheduledMatch := range mo.ScheduledMatches {
