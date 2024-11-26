@@ -11,10 +11,6 @@ type MatchWeight struct {
 	Weight   float64              `json:"weight"`
 }
 
-func (mw MatchWeight) Less(other MatchWeight) bool {
-	return mw.Weight < other.Weight
-}
-
 func (mw MatchWeight) Equal(other MatchWeight) bool {
 	if len(mw.RoleIdxs) != len(other.RoleIdxs) {
 		return false
@@ -56,20 +52,4 @@ func (mw MatchWeight) MarshalJSON() ([]byte, error) {
 		RoleIdxs: roleIdxs,
 		Weight:   mw.Weight,
 	})
-}
-
-func (mw MatchWeight) UnmarshalJSON(data []byte) error {
-	aux := &struct {
-		RoleIdxs map[string][]int `json:"role_idxs"`
-		Weight   float64          `json:"weight"`
-	}{}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	mw.RoleIdxs = make(map[model.Role][]int)
-	for role, idxs := range aux.RoleIdxs {
-		mw.RoleIdxs[model.RoleFromString(role)] = idxs
-	}
-	mw.Weight = aux.Weight
-	return nil
 }

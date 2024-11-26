@@ -98,7 +98,8 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 		for team := range s.waitingRoom.connections {
 			s.matchOptimizer.updateTeam(team)
 		}
-		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(s.matchOptimizer.getScheduledMatchesWithTeam())
+		matches := s.matchOptimizer.getMatches()
+		roleMapConns, err := s.waitingRoom.GetConnectionsWithMatchOptimizer(matches)
 		if err != nil {
 			slog.Error("待機部屋からの接続の取得に失敗しました", "error", err)
 			return
@@ -122,8 +123,12 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		winSide := game.Start()
-		if winSide != model.T_NONE && s.config.MatchOptimizer.Enable {
-			s.matchOptimizer.addEndedMatch(util.GetRoleTeamNamesMap(game.Agents))
+		if s.config.MatchOptimizer.Enable {
+			if winSide != model.T_NONE {
+				s.matchOptimizer.setMatchEnd(util.GetRoleTeamNamesMap(game.Agents))
+			} else {
+				s.matchOptimizer.setMatchWeight(util.GetRoleTeamNamesMap(game.Agents), 0)
+			}
 		}
 	}()
 }

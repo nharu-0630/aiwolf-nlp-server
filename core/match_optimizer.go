@@ -6,13 +6,15 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
-	"golang.org/x/exp/rand"
+	"github.com/kano-lab/aiwolf-nlp-server/util"
 )
 
 type MatchOptimizer struct {
 	outputPath       string                 `json:"-"`
+	InfiniteLoop     bool                   `json:"infinite_loop"`
 	TeamCount        int                    `json:"team_count"`
 	GameCount        int                    `json:"game_count"`
 	RoleNumMap       map[model.Role]int     `json:"role_num_map"`
@@ -33,15 +35,19 @@ func (mo *MatchOptimizer) MarshalJSON() ([]byte, error) {
 			endedMatches[i][role.String()] = idxs
 		}
 	}
+	scheduledMatches := make([]MatchWeight, len(mo.ScheduledMatches))
+	copy(scheduledMatches, mo.ScheduledMatches)
 	type Alias MatchOptimizer
 	return json.Marshal(&struct {
 		*Alias
-		RoleNumMap   map[string]int     `json:"role_num_map"`
-		EndedMatches []map[string][]int `json:"ended_matches"`
+		RoleNumMap       map[string]int     `json:"role_num_map"`
+		EndedMatches     []map[string][]int `json:"ended_matches"`
+		ScheduledMatches []MatchWeight      `json:"scheduled_matches"`
 	}{
-		Alias:        (*Alias)(mo),
-		RoleNumMap:   roleNumMap,
-		EndedMatches: endedMatches,
+		Alias:            (*Alias)(mo),
+		RoleNumMap:       roleNumMap,
+		EndedMatches:     endedMatches,
+		ScheduledMatches: scheduledMatches,
 	})
 }
 
@@ -73,15 +79,14 @@ func (mo *MatchOptimizer) UnmarshalJSON(data []byte) error {
 		}
 	}
 	mo.ScheduledMatches = make([]MatchWeight, len(aux.ScheduledMatches))
-	for i, match := range aux.ScheduledMatches {
-		mw := MatchWeight{
+	for i, scheduledMatch := range aux.ScheduledMatches {
+		mo.ScheduledMatches[i] = MatchWeight{
 			RoleIdxs: make(map[model.Role][]int),
-			Weight:   match.Weight,
+			Weight:   scheduledMatch.Weight,
 		}
-		for role, idxs := range match.RoleIdxs {
-			mw.RoleIdxs[model.RoleFromString(role)] = idxs
+		for role, idxs := range scheduledMatch.RoleIdxs {
+			mo.ScheduledMatches[i].RoleIdxs[model.RoleFromString(role)] = idxs
 		}
-		mo.ScheduledMatches[i] = mw
 	}
 	return nil
 }
@@ -109,28 +114,35 @@ func NewMatchOptimizerFromConfig(config model.Config) (*MatchOptimizer, error) {
 		return nil, errors.New("対応する役職の人数がありません")
 	}
 	mo := &MatchOptimizer{
-		TeamCount:  config.MatchOptimizer.TeamCount,
-		GameCount:  config.MatchOptimizer.GameCount,
-		outputPath: config.MatchOptimizer.OutputPath,
-		RoleNumMap: roleNumMap,
-		IdxTeamMap: map[int]string{},
+		outputPath:   config.MatchOptimizer.OutputPath,
+		InfiniteLoop: config.MatchOptimizer.InfiniteLoop,
+		TeamCount:    config.MatchOptimizer.TeamCount,
+		GameCount:    config.MatchOptimizer.GameCount,
+		RoleNumMap:   roleNumMap,
+		IdxTeamMap:   map[int]string{},
 	}
 	mo.initialize()
 	return mo, nil
 }
 
-func (mo *MatchOptimizer) getScheduledMatchesWithTeam() []map[model.Role][]string {
+func (mo *MatchOptimizer) getMatches() []map[model.Role][]string {
+	count := 0
+	for _, match := range mo.ScheduledMatches {
+		if match.Weight > 0.0 {
+			count++
+		}
+	}
+	if count == 0 && mo.InfiniteLoop {
+		slog.Info("スケジュールされたマッチがないため、新たに追加します")
+		mo.append()
+	}
 	matches := []map[model.Role][]string{}
 	for _, match := range mo.ScheduledMatches {
-		idxMatch := make(map[model.Role][]string)
-		for role, idxs := range match.RoleIdxs {
-			idxMatch[role] = make([]string, len(idxs))
-			for i, idx := range idxs {
-				idxMatch[role][i] = mo.IdxTeamMap[idx]
-			}
-		}
-		matches = append(matches, idxMatch)
+		matches = append(matches, util.IdxMatchToTeamNameMatch(mo.IdxTeamMap, match.RoleIdxs))
 	}
+	sort.Slice(mo.ScheduledMatches, func(i, j int) bool {
+		return mo.ScheduledMatches[i].Weight > mo.ScheduledMatches[j].Weight
+	})
 	return matches
 }
 
@@ -155,91 +167,26 @@ func (mo *MatchOptimizer) initialize() error {
 	slog.Info("マッチオプティマイザを初期化します")
 	mo.EndedMatches = []map[model.Role][]int{}
 
-	// 各ロールの理論的な出現回数を計算
-	theoretical := make(map[model.Role]float64)
-	var roles []model.Role
-	for role, num := range mo.RoleNumMap {
-		if num > 0 {
-			theoretical[role] = float64(num*mo.GameCount) / float64(mo.TeamCount)
-			for i := 0; i < num; i++ {
-				roles = append(roles, role)
-			}
-		}
-	}
+	theoretical, roles := util.CalcTheoretical(mo.RoleNumMap, mo.GameCount, mo.TeamCount)
 	slog.Info("各役職の理論値を計算しました", "theoretical", theoretical)
-	maxAttempts := mo.GameCount * mo.TeamCount * 5
-	var bestScheduledMatches []map[model.Role][]int
-	bestDeviation := -1.0
 
+	maxAttempts := mo.GameCount * mo.TeamCount * 5
+	var bestMatches []map[model.Role][]int
+	bestDeviation := -1.0
 	slog.Info("マッチング最適化を開始します", "attempts", maxAttempts)
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
+		matches, counts, success := util.GenerateMatches(mo.GameCount, mo.TeamCount, roles, theoretical)
+		deviation := util.CalcDeviation(counts, theoretical)
 
-		teamRoleCounts := make(map[int]map[model.Role]int)
-		for i := 0; i < mo.TeamCount; i++ {
-			teamRoleCounts[i] = make(map[model.Role]int)
-			for role := range theoretical {
-				teamRoleCounts[i][role] = 0
-			}
-		}
-
-		scheduledMatches := []map[model.Role][]int{}
-		success := true
-
-		for i := 0; i < mo.GameCount; i++ {
-			availableTeams := make([]int, mo.TeamCount)
-			for j := 0; j < mo.TeamCount; j++ {
-				availableTeams[j] = j
-			}
-			rand.Shuffle(len(availableTeams), func(i, j int) {
-				availableTeams[i], availableTeams[j] = availableTeams[j], availableTeams[i]
-			})
-
-			match := make(map[model.Role][]int)
-			usedTeams := make(map[int]bool)
-
-			shuffledRoles := append([]model.Role{}, roles...)
-			rand.Shuffle(len(shuffledRoles), func(i, j int) {
-				shuffledRoles[i], shuffledRoles[j] = shuffledRoles[j], shuffledRoles[i]
-			})
-
-			for _, role := range shuffledRoles {
-				bestTeam := mo.findBestTeam(availableTeams, usedTeams, teamRoleCounts, role, theoretical)
-				if bestTeam == -1 {
-					success = false
-					break
-				}
-
-				match[role] = append(match[role], bestTeam)
-				usedTeams[bestTeam] = true
-				teamRoleCounts[bestTeam][role]++
-			}
-
-			if !success {
-				break
-			}
-
-			scheduledMatches = append(scheduledMatches, match)
-		}
-
-		currentDeviation := 0.0
-		if len(scheduledMatches) > 0 {
-			for team := 0; team < mo.TeamCount; team++ {
-				for role := range theoretical {
-					currentCount := float64(teamRoleCounts[team][role])
-					currentDeviation += (currentCount - theoretical[role]) * (currentCount - theoretical[role])
-				}
-			}
-
-			if bestScheduledMatches == nil || currentDeviation < bestDeviation {
-				slog.Info("より良い解が見つかりました", "deviation", currentDeviation)
-				bestScheduledMatches = scheduledMatches
-				bestDeviation = currentDeviation
-			}
+		if bestMatches == nil || deviation < bestDeviation {
+			slog.Info("より良い解が見つかりました", "deviation", deviation)
+			bestMatches = matches
+			bestDeviation = deviation
 		}
 
 		if success {
-			for _, match := range scheduledMatches {
+			for _, match := range matches {
 				mw := MatchWeight{
 					RoleIdxs: match,
 					Weight:   1.0,
@@ -252,8 +199,8 @@ func (mo *MatchOptimizer) initialize() error {
 		}
 	}
 
-	if bestScheduledMatches != nil {
-		for _, match := range bestScheduledMatches {
+	if bestMatches != nil {
+		for _, match := range bestMatches {
 			mw := MatchWeight{
 				RoleIdxs: match,
 				Weight:   1.0,
@@ -267,60 +214,56 @@ func (mo *MatchOptimizer) initialize() error {
 	return errors.New("最適なマッチングが見つかりませんでした")
 }
 
-func (mo *MatchOptimizer) findBestTeam(
-	availableTeams []int,
-	usedTeams map[int]bool,
-	teamRoleCounts map[int]map[model.Role]int,
-	role model.Role,
-	theoretical map[model.Role]float64,
-) int {
-	bestTeam := -1
-	minDeviation := -1.0
-	for _, team := range availableTeams {
-		if usedTeams[team] {
-			continue
+func (mo *MatchOptimizer) append() error {
+	theoretical, roles := util.CalcTheoretical(mo.RoleNumMap, mo.GameCount, mo.TeamCount)
+	slog.Info("各役職の理論値を計算しました", "theoretical", theoretical)
+
+	maxAttempts := mo.GameCount * mo.TeamCount * 5
+	var bestMatches []map[model.Role][]int
+	bestDeviation := -1.0
+	slog.Info("マッチング最適化を開始します", "attempts", maxAttempts)
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		matches, counts, success := util.GenerateMatches(mo.GameCount, mo.TeamCount, roles, theoretical)
+		deviation := util.CalcDeviation(counts, theoretical)
+
+		if bestMatches == nil || deviation < bestDeviation {
+			slog.Info("より良い解が見つかりました", "deviation", deviation)
+			bestMatches = matches
+			bestDeviation = deviation
 		}
 
-		// 理論値を超える場合はスキップ
-		if float64(teamRoleCounts[team][role]+1) > theoretical[role] {
-			continue
-		}
-
-		// 全ロールの理論値からの偏差を計算
-		deviation := 0.0
-		for r, theoreticalValue := range theoretical {
-			currentCount := float64(teamRoleCounts[team][r])
-			if r == role {
-				currentCount++
+		if success {
+			for _, match := range matches {
+				mw := MatchWeight{
+					RoleIdxs: match,
+					Weight:   1.0,
+				}
+				mo.ScheduledMatches = append(mo.ScheduledMatches, mw)
 			}
-			deviation += (currentCount - theoreticalValue) * (currentCount - theoreticalValue)
-		}
-
-		if bestTeam == -1 || deviation < minDeviation {
-			bestTeam = team
-			minDeviation = deviation
+			mo.save()
+			slog.Info("マッチング最適化が成功しました", "attempts", attempt+1)
+			return nil
 		}
 	}
-	return bestTeam
+
+	if bestMatches != nil {
+		for _, match := range bestMatches {
+			mw := MatchWeight{
+				RoleIdxs: match,
+				Weight:   1.0,
+			}
+			mo.ScheduledMatches = append(mo.ScheduledMatches, mw)
+		}
+		mo.save()
+		slog.Info("最良の解を採用します", "bestDeviation", bestDeviation)
+		return nil
+	}
+	return errors.New("最適なマッチングが見つかりませんでした")
 }
 
-func (mo *MatchOptimizer) teamToIdx(team string) int {
-	for idx, agent := range mo.IdxTeamMap {
-		if agent == team {
-			return idx
-		}
-	}
-	return -1
-}
-
-func (mo *MatchOptimizer) addEndedMatch(match map[model.Role][]string) {
-	idxMatch := make(map[model.Role][]int)
-	for role, teams := range match {
-		idxMatch[role] = make([]int, len(teams))
-		for i, team := range teams {
-			idxMatch[role][i] = mo.teamToIdx(team)
-		}
-	}
+func (mo *MatchOptimizer) setMatchEnd(match map[model.Role][]string) {
+	idxMatch := util.TeamNameMatchToIdxMatch(mo.IdxTeamMap, match)
 
 	for i, scheduledMatch := range mo.ScheduledMatches {
 		if scheduledMatch.Equal(MatchWeight{RoleIdxs: idxMatch}) {
@@ -332,6 +275,20 @@ func (mo *MatchOptimizer) addEndedMatch(match map[model.Role][]string) {
 	mo.EndedMatches = append(mo.EndedMatches, idxMatch)
 	slog.Info("マッチ履歴を追加しました", "length", len(mo.EndedMatches))
 	mo.save()
+}
+
+func (mo *MatchOptimizer) setMatchWeight(match map[model.Role][]string, weight float64) {
+	idxMatch := util.TeamNameMatchToIdxMatch(mo.IdxTeamMap, match)
+
+	for i, scheduledMatch := range mo.ScheduledMatches {
+		if scheduledMatch.Equal(MatchWeight{RoleIdxs: idxMatch}) {
+			mo.ScheduledMatches[i].Weight = weight
+			slog.Info("スケジュールされたマッチの重みを設定しました", "weight", weight)
+			mo.save()
+			return
+		}
+	}
+	slog.Warn("スケジュールされたマッチが見つかりませんでした")
 }
 
 func (mo *MatchOptimizer) save() error {

@@ -31,18 +31,18 @@ func (wr *WaitingRoom) AddConnection(team string, connection model.Connection) {
 	slog.Info("新しいクライアントが待機部屋に追加されました", "team", team, "remote_addr", connection.Conn.RemoteAddr().String())
 }
 
-func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(scheduledMatches []map[model.Role][]string) (map[model.Role][]model.Connection, error) {
+func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(matches []map[model.Role][]string) (map[model.Role][]model.Connection, error) {
 	wr.mu.Lock()
 	defer wr.mu.Unlock()
 	var roleMapConns = make(map[model.Role][]model.Connection)
 
-	if len(scheduledMatches) == 0 {
+	if len(matches) == 0 {
 		return nil, errors.New("スケジュールされたマッチがありません")
 	}
 
 	var readyMatch = map[model.Role][]string{}
 	ready := true
-	for _, match := range scheduledMatches {
+	for _, match := range matches {
 		for _, teams := range match {
 			for _, team := range teams {
 				if len(wr.connections[team]) == 0 {
