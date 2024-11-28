@@ -12,12 +12,12 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/kano-lab/aiwolf-nlp-server/model"
-	"golang.org/x/exp/rand"
 )
 
 type DummyClient struct {
 	conn        *websocket.Conn
 	done        chan struct{}
+	name        string
 	role        model.Role
 	info        map[string]interface{}
 	setting     map[string]interface{}
@@ -25,7 +25,7 @@ type DummyClient struct {
 	prevRequest model.Request
 }
 
-func NewDummyClient(u url.URL, t *testing.T) (*DummyClient, error) {
+func NewDummyClient(u url.URL, name string, t *testing.T) (*DummyClient, error) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("dial: %v", err)
@@ -33,6 +33,7 @@ func NewDummyClient(u url.URL, t *testing.T) (*DummyClient, error) {
 	client := &DummyClient{
 		conn:        c,
 		done:        make(chan struct{}),
+		name:        name,
 		role:        model.Role{},
 		info:        make(map[string]interface{}),
 		setting:     make(map[string]interface{}),
@@ -112,12 +113,7 @@ func (dc *DummyClient) setSetting(recv map[string]interface{}) error {
 }
 
 func (dc *DummyClient) handleName(_ map[string]interface{}) (string, error) {
-	const letterBytes = "abcdefghijklmnopqrstuvwxyz"
-	b := make([]byte, 8)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b), nil
+	return dc.name, nil
 }
 
 func (dc *DummyClient) handleInitialize(recv map[string]interface{}) (string, error) {

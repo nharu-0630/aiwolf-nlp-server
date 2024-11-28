@@ -7,7 +7,7 @@ import (
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
-func TestMatchOptimizer(t *testing.T) {
+func TestInitializeMatchOptimizer(t *testing.T) {
 	config, err := model.LoadFromPath("../config/debug.yml")
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
@@ -17,4 +17,17 @@ func TestMatchOptimizer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create MatchOptimizer: %v", err)
 	}
+}
+
+func TestLoadMatchOptimizer(t *testing.T) {
+	config, err := model.LoadFromPath("../config/debug.yml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
+
+	mo, err := core.NewMatchOptimizer(*config)
+	if err != nil {
+		t.Fatalf("Failed to create MatchOptimizer: %v", err)
+	}
+	t.Log(mo)
 }
