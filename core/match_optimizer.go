@@ -281,12 +281,14 @@ func (mo *MatchOptimizer) setMatchEnd(match map[model.Role][]string) {
 		if scheduledMatch.Equal(MatchWeight{RoleIdxs: idxMatch}) {
 			mo.ScheduledMatches = append(mo.ScheduledMatches[:i], mo.ScheduledMatches[i+1:]...)
 			slog.Info("スケジュールされたマッチから削除しました", "length", len(mo.ScheduledMatches))
-			break
+
+			mo.EndedMatches = append(mo.EndedMatches, idxMatch)
+			slog.Info("マッチ履歴を追加しました", "length", len(mo.EndedMatches))
+			mo.save()
+			return
 		}
 	}
-	mo.EndedMatches = append(mo.EndedMatches, idxMatch)
-	slog.Info("マッチ履歴を追加しました", "length", len(mo.EndedMatches))
-	mo.save()
+	slog.Warn("スケジュールされたマッチが見つかりませんでした")
 }
 
 func (mo *MatchOptimizer) setMatchWeight(match map[model.Role][]string, weight float64) {
