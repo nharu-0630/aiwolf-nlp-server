@@ -1,4 +1,4 @@
-name: Test and Upload Analysis Results
+name: Test and Upload Results
 on:
   push:
     branches:
@@ -19,8 +19,13 @@ jobs:
         run: go build -race -ldflags "-X main.version=$(git describe --tag --abbrev=0) -X main.revision=$(git rev-list -1 HEAD) -X main.build=$(git describe --tags)" -v ./...
       - name: Test with the Go CLI
         run: go test -race -ldflags "-X main.version=$(git describe --tag --abbrev=0) -X main.revision=$(git rev-list -1 HEAD) -X main.build=$(git describe --tags)" -v ./...
-      - name: Upload analysis results
+      - name: Upload analysis result
         uses: actions/upload-artifact@v3
         with:
-          name: analysis-results
+          name: analysis-result
           path: log/*.json
+      - name: Upload deprecated log
+        uses: actions/upload-artifact@v3
+        with:
+          name: deprecated-log
+          path: log/*.log

@@ -41,6 +41,11 @@ api_service:
   enable: true # APIサービスを有効にするか
   publish_running_game: true # 進行中のゲームを公開するか
 
+deprecated_log_service:
+  enable: true # 従来形式のログ出力サービスを有効にするか
+  output_dir: "./log" # ログの出力ディレクトリ
+  filename: "{game_id}" # ログのファイル名
+
 match_optimizer:
   enable: true # マッチオプティマイザを有効にするか
   team_count: 5 # 参加するチーム数

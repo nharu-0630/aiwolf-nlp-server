@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
@@ -10,15 +11,16 @@ import (
 )
 
 type Game struct {
-	Config            *model.Config
-	ID                string
-	Settings          *model.Settings
-	Agents            []*model.Agent
-	CurrentDay        int
-	GameStatuses      map[int]*model.GameStatus
-	LastTalkIdxMap    map[*model.Agent]int
-	LastWhisperIdxMap map[*model.Agent]int
-	AnalysisService   *service.AnalysisService
+	Config               *model.Config
+	ID                   string
+	Settings             *model.Settings
+	Agents               []*model.Agent
+	CurrentDay           int
+	GameStatuses         map[int]*model.GameStatus
+	LastTalkIdxMap       map[*model.Agent]int
+	LastWhisperIdxMap    map[*model.Agent]int
+	AnalysisService      *service.AnalysisService
+	DeprecatedLogService *service.DeprecatedLogService
 }
 
 func NewGame(config *model.Config, settings *model.Settings, conns []model.Connection) *Game {
@@ -63,10 +65,17 @@ func (g *Game) SetAnalysisService(analysisService *service.AnalysisService) {
 	g.AnalysisService = analysisService
 }
 
+func (g *Game) SetDeprecatedLogService(deprecatedLogService *service.DeprecatedLogService) {
+	g.DeprecatedLogService = deprecatedLogService
+}
+
 func (g *Game) Start() model.Team {
 	slog.Info("ゲームを開始します", "id", g.ID)
 	if g.AnalysisService != nil {
 		g.AnalysisService.TrackStartGame(g.ID, g.Agents)
+	}
+	if g.DeprecatedLogService != nil {
+		g.DeprecatedLogService.TrackStartGame(g.ID, g.Agents)
 	}
 	g.requestToEveryone(model.R_INITIALIZE)
 	var winSide model.Team = model.T_NONE
@@ -83,9 +92,19 @@ func (g *Game) Start() model.Team {
 		slog.Warn("エラーが多発したため、ゲームを終了します", "id", g.ID)
 	}
 	g.requestToEveryone(model.R_FINISH)
+	if g.DeprecatedLogService != nil {
+		for _, agent := range g.Agents {
+			g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,status,%d,%s,%s,%s", g.CurrentDay, agent.Idx, agent.Role.Name, g.GameStatuses[g.CurrentDay].StatusMap[*agent].String(), agent.Name))
+		}
+		villagers, werewolves := util.CountAliveTeams(g.GameStatuses[g.CurrentDay].StatusMap)
+		g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,result,%d,%d,%s", g.CurrentDay, villagers, werewolves, winSide))
+	}
 	g.closeAllAgents()
 	if g.AnalysisService != nil {
 		g.AnalysisService.TrackEndGame(g.ID, winSide)
+	}
+	if g.DeprecatedLogService != nil {
+		g.DeprecatedLogService.TrackEndGame(g.ID)
 	}
 	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
 	return winSide
@@ -94,6 +113,11 @@ func (g *Game) Start() model.Team {
 func (g *Game) progressDay() {
 	slog.Info("昼を開始します", "id", g.ID, "day", g.CurrentDay)
 	g.requestToEveryone(model.R_DAILY_INITIALIZE)
+	if g.DeprecatedLogService != nil {
+		for _, agent := range g.Agents {
+			g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,status,%d,%s,%s,%s", g.CurrentDay, agent.Idx, agent.Role.Name, g.GameStatuses[g.CurrentDay].StatusMap[*agent].String(), agent.Name))
+		}
+	}
 	if g.Settings.IsTalkOnFirstDay && g.CurrentDay == 0 {
 		g.doWhisper()
 	}

@@ -14,7 +14,7 @@ import (
 )
 
 type MatchOptimizer struct {
-	mu               sync.RWMutex
+	mu               sync.RWMutex           `json:"-"`
 	outputPath       string                 `json:"-"`
 	InfiniteLoop     bool                   `json:"infinite_loop"`
 	TeamCount        int                    `json:"team_count"`

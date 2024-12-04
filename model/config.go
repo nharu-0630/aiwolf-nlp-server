@@ -57,6 +57,11 @@ type Config struct {
 		Enable             bool `yaml:"enable"`
 		PublishRunningGame bool `yaml:"publish_running_game"`
 	} `yaml:"api_service"`
+	DeprecatedLogService struct {
+		Enable    bool   `yaml:"enable"`
+		OutputDir string `yaml:"output_dir"`
+		Filename  string `yaml:"filename"`
+	} `yaml:"deprecated_log_service"`
 	MatchOptimizer struct {
 		Enable       bool   `yaml:"enable"`
 		TeamCount    int    `yaml:"team_count"`

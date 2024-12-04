@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"fmt"
 	"log/slog"
 	"math/rand"
 
@@ -34,6 +35,9 @@ func (g *Game) doExecution() {
 			Target: *executed,
 			Result: executed.Role.Species,
 		}
+		if g.DeprecatedLogService != nil {
+			g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,execute,%d,%s", g.CurrentDay, executed.Idx, executed.Role.Name))
+		}
 		slog.Info("霊能結果を設定しました", "id", g.ID, "target", executed.String(), "result", executed.Role.Species)
 	} else {
 		slog.Warn("追放対象がいないため、追放結果を設定しません", "id", g.ID)
@@ -61,10 +65,19 @@ func (g *Game) doAttack() {
 		if attacked != nil && !g.isGuarded(attacked) {
 			g.GameStatuses[g.CurrentDay].StatusMap[*attacked] = model.S_DEAD
 			g.GameStatuses[g.CurrentDay].AttackedAgent = attacked
+			if g.DeprecatedLogService != nil {
+				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attack,%d,true", g.CurrentDay, attacked.Idx))
+			}
 			slog.Info("襲撃結果を設定しました", "id", g.ID, "agent", attacked.Name)
 		} else if attacked != nil {
+			if g.DeprecatedLogService != nil {
+				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attack,%d,false", g.CurrentDay, attacked.Idx))
+			}
 			slog.Info("護衛されたため、襲撃結果を設定しません", "id", g.ID, "agent", attacked.Name)
 		} else {
+			if g.DeprecatedLogService != nil {
+				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attack,-1,true", g.CurrentDay))
+			}
 			slog.Info("襲撃対象がいないため、襲撃結果を設定しません", "id", g.ID)
 		}
 	}
@@ -110,6 +123,9 @@ func (g *Game) conductDivination(agent *model.Agent) {
 		Target: *target,
 		Result: target.Role.Species,
 	}
+	if g.DeprecatedLogService != nil {
+		g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,divine,%d,%d,%s", g.CurrentDay, agent.Idx, target.Idx, target.Role.Species))
+	}
 	slog.Info("占い結果を設定しました", "id", g.ID, "target", target.String(), "result", target.Role.Species)
 }
 
@@ -143,6 +159,9 @@ func (g *Game) conductGuard(agent *model.Agent) {
 		Agent:  *agent,
 		Target: *target,
 	}
+	if g.DeprecatedLogService != nil {
+		g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,guard,%d,%d,%s", g.CurrentDay, agent.Idx, target.Idx, target.Role.Name))
+	}
 	slog.Info("護衛対象を設定しました", "id", g.ID, "target", target.String())
 }
 
@@ -158,6 +177,9 @@ func (g *Game) executeAttackVote() {
 
 func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []model.Vote {
 	votes := make([]model.Vote, 0)
+	if request != model.R_VOTE && request != model.R_ATTACK {
+		return votes
+	}
 	for _, agent := range agents {
 		target, err := g.findTargetByRequest(agent, request)
 		if err != nil {
@@ -172,6 +194,13 @@ func (g *Game) collectVotes(request model.Request, agents []*model.Agent) []mode
 			Agent:  *agent,
 			Target: *target,
 		})
+		if g.DeprecatedLogService != nil {
+			if request == model.R_VOTE {
+				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,vote,%d,%d", g.CurrentDay, agent.Idx, target.Idx))
+			} else {
+				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attackVote,%d,%d", g.CurrentDay, agent.Idx, target.Idx))
+			}
+		}
 		slog.Info("投票を受信しました", "id", g.ID, "agent", agent.String(), "target", target.String())
 	}
 	return votes
@@ -207,6 +236,8 @@ func (g *Game) conductCommunication(request model.Request) {
 		maxTurn = g.Settings.MaxWhisperTurn
 		remainMap = g.GameStatuses[g.CurrentDay].RemainWhisperMap
 		talkList = &g.GameStatuses[g.CurrentDay].Whispers
+	default:
+		return
 	}
 
 	if len(agents) < 2 {
@@ -241,6 +272,13 @@ func (g *Game) conductCommunication(request model.Request) {
 			} else {
 				remainMap[*agent] = 0
 				slog.Info("発言がオーバーであるため、残り発言回数を0にしました", "id", g.ID, "agent", agent.String())
+			}
+			if g.DeprecatedLogService != nil {
+				if request == model.R_TALK {
+					g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,talk,%d,%d,%d,%s", g.CurrentDay, talk.Idx, talk.Turn, talk.Agent.Idx, talk.Text))
+				} else {
+					g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,whisper,%d,%d,%d,%s", g.CurrentDay, talk.Idx, talk.Turn, talk.Agent.Idx, talk.Text))
+				}
 			}
 			slog.Info("発言を受信しました", "id", g.ID, "agent", agent.String(), "text", text, "skip", skipMap[*agent], "remain", remainMap[*agent])
 		}

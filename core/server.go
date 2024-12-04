@@ -15,15 +15,16 @@ import (
 )
 
 type Server struct {
-	config          model.Config
-	upgrader        websocket.Upgrader
-	waitingRoom     *WaitingRoom
-	matchOptimizer  *MatchOptimizer
-	gameSettings    *model.Settings
-	games           []*logic.Game
-	mu              sync.RWMutex
-	analysisService *service.AnalysisService
-	apiService      *service.ApiService
+	config               model.Config
+	upgrader             websocket.Upgrader
+	waitingRoom          *WaitingRoom
+	matchOptimizer       *MatchOptimizer
+	gameSettings         *model.Settings
+	games                []*logic.Game
+	mu                   sync.RWMutex
+	analysisService      *service.AnalysisService
+	apiService           *service.ApiService
+	deprecatedLogService *service.DeprecatedLogService
 }
 
 func NewServer(config model.Config) *Server {
@@ -47,7 +48,14 @@ func NewServer(config model.Config) *Server {
 		server.analysisService = service.NewAnalysisService(config)
 	}
 	if config.ApiService.Enable {
-		server.apiService = service.NewApiService(server.analysisService, config)
+		if server.analysisService == nil {
+			slog.Error("APIサービスの作成に失敗しました", "error", "analysis service is nil")
+		} else {
+			server.apiService = service.NewApiService(server.analysisService, config)
+		}
+	}
+	if config.DeprecatedLogService.Enable {
+		server.deprecatedLogService = service.NewDeprecatedLogService(config)
 	}
 	if config.MatchOptimizer.Enable {
 		matchOptimizer, err := NewMatchOptimizer(config)
@@ -118,6 +126,9 @@ func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.analysisService != nil {
 		game.SetAnalysisService(s.analysisService)
+	}
+	if s.deprecatedLogService != nil {
+		game.SetDeprecatedLogService(s.deprecatedLogService)
 	}
 	s.games = append(s.games, game)
 	s.mu.Unlock()
