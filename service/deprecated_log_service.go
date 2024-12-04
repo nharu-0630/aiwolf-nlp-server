@@ -26,8 +26,8 @@ type DeprecatedLogData struct {
 func NewDeprecatedLogService(config model.Config) *DeprecatedLogService {
 	return &DeprecatedLogService{
 		deprecatedLogsData: make(map[string]*DeprecatedLogData),
-		outputDir:          config.AnalysisService.OutputDir,
-		templateFilename:   config.AnalysisService.Filename,
+		outputDir:          config.DeprecatedLogService.OutputDir,
+		templateFilename:   config.DeprecatedLogService.Filename,
 	}
 }
 
