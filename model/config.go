@@ -51,6 +51,7 @@ type Config struct {
 	AnalysisService struct {
 		Enable    bool   `yaml:"enable"`
 		OutputDir string `yaml:"output_dir"`
+		Filename  string `yaml:"filename"`
 	} `yaml:"analysis_service"`
 	ApiService struct {
 		Enable             bool `yaml:"enable"`

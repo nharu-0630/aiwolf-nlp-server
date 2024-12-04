@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
 type AnalysisService struct {
-	gamesData     map[string]*GameData
-	outputDir     string
-	endGameStatus map[string]bool
+	gamesData        map[string]*GameData
+	outputDir        string
+	templateFilename string
+	endGameStatus    map[string]bool
 }
 
 type GameData struct {
+	id           string
+	filename     string
 	agents       []interface{}
 	winSide      model.Team
 	entries      []interface{}
@@ -26,14 +30,16 @@ type GameData struct {
 
 func NewAnalysisService(config model.Config) *AnalysisService {
 	return &AnalysisService{
-		gamesData:     make(map[string]*GameData),
-		outputDir:     config.AnalysisService.OutputDir,
-		endGameStatus: make(map[string]bool),
+		gamesData:        make(map[string]*GameData),
+		outputDir:        config.AnalysisService.OutputDir,
+		templateFilename: config.AnalysisService.Filename,
+		endGameStatus:    make(map[string]bool),
 	}
 }
 
 func (a *AnalysisService) TrackStartGame(id string, agents []*model.Agent) {
 	gameData := &GameData{
+		id:           id,
 		agents:       make([]interface{}, 0),
 		entries:      make([]interface{}, 0),
 		timestampMap: make(map[string]int64),
@@ -50,6 +56,23 @@ func (a *AnalysisService) TrackStartGame(id string, agents []*model.Agent) {
 			},
 		)
 	}
+	filename := strings.ReplaceAll(a.templateFilename, "{game_id}", gameData.id)
+	filename = strings.ReplaceAll(filename, "{timestamp}", fmt.Sprintf("%d", time.Now().Unix()))
+	teams := make(map[string]struct{})
+	for _, agent := range gameData.agents {
+		team := agent.(map[string]interface{})["team"].(string)
+		teams[team] = struct{}{}
+	}
+	teamStr := ""
+	for team := range teams {
+		if teamStr != "" {
+			teamStr += "_"
+		}
+		teamStr += team
+	}
+	filename = strings.ReplaceAll(filename, "{teams}", teamStr)
+	gameData.filename = filename
+
 	a.gamesData[id] = gameData
 	a.endGameStatus[id] = false
 }
@@ -109,7 +132,7 @@ func (a *AnalysisService) saveGameData(id string) {
 		if _, err := os.Stat(a.outputDir); os.IsNotExist(err) {
 			os.Mkdir(a.outputDir, 0755)
 		}
-		filePath := filepath.Join(a.outputDir, fmt.Sprintf("%s.json", id))
+		filePath := filepath.Join(a.outputDir, fmt.Sprintf("%s.json", gameData.filename))
 		file, err := os.Create(filePath)
 		if err != nil {
 			return

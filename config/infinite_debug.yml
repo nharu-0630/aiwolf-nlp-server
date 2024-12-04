@@ -39,6 +39,7 @@ analysis_service:
 api_service:
   enable: true # APIサービスを有効にするか
   publish_running_game: true # 進行中のゲームを公開するか
+  filename: "{game_id}" # 分析結果のファイル名
 
 match_optimizer:
   enable: true # マッチオプティマイザを有効にするか

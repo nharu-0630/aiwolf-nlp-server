@@ -35,6 +35,7 @@ game:
 analysis_service:
   enable: true # 分析サービスを有効にするか
   output_dir: "./../log" # 分析結果の出力ディレクトリ
+  filename: "{game_id}" # 分析結果のファイル名
 
 api_service:
   enable: true # APIサービスを有効にするか
