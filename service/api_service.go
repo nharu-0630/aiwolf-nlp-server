@@ -1,8 +1,6 @@
 package service
 
 import (
-	"sync"
-
 	"github.com/gin-gonic/gin"
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
@@ -10,7 +8,6 @@ import (
 type ApiService struct {
 	analysisService    *AnalysisService
 	publishRunningGame bool
-	mu                 sync.Mutex
 }
 
 func NewApiService(analysisService *AnalysisService, config model.Config) *ApiService {
@@ -26,9 +23,6 @@ func (api *ApiService) RegisterRoutes(router *gin.Engine) {
 }
 
 func (api *ApiService) handleGameIDs(c *gin.Context) {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-
 	gameIDs := api.getGameIDs()
 
 	c.JSON(200, gin.H{
@@ -37,9 +31,6 @@ func (api *ApiService) handleGameIDs(c *gin.Context) {
 }
 
 func (api *ApiService) handleGameData(c *gin.Context) {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-
 	gameID := c.Query("id")
 	if gameID == "" {
 		c.JSON(400, gin.H{"error": "id is required"})
