@@ -56,9 +56,9 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 		g.resetLastIdxMaps()
 		packet = model.Packet{Request: &request, Info: &info, Settings: g.Settings}
 	case model.R_VOTE, model.R_DIVINE, model.R_GUARD:
-		packet = model.Packet{Request: &request}
+		packet = model.Packet{Request: &request, Info: &info}
 	case model.R_DAILY_FINISH, model.R_TALK, model.R_WHISPER, model.R_ATTACK:
-		packet = model.Packet{Request: &request}
+		packet = model.Packet{Request: &request, Info: &info}
 		talks, whispers := g.minimize(agent, info.TalkList, info.WhisperList)
 		if request == model.R_TALK || request == model.R_DAILY_FINISH {
 			packet.TalkHistory = &talks
