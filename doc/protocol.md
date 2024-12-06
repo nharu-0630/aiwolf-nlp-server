@@ -29,12 +29,14 @@
 
 ### レスポンスの概要
 
-レスポンスは、トークや囁きリクエストに対してエージェントが発する自然言語を返す場合 (例: `こんにちは`) と、投票や占いリクエストなどに対して対象のエージェントのインデックス付き文字列 (例: `Agent[01]`) を返す２種類があります。
+レスポンスは、トークや囁きリクエストに対してエージェントが発する自然言語を返す場合 (例: `こんにちは`) と、投票や占いリクエストなどに対して対象のエージェントのインデックス付き文字列 (例: `Agent[01]`) を返す２種類があります。  
+インデックス付き文字列はサーバにより、半角スペース、CR文字とLF文字はトリムする処理が行われます。そのため、`Agent[01]\n` と `Agent[01]` は同じ文字列として扱われます。
 
 ## リクエストの構造
 
 各リクエストについて、実際の例を示しながら説明します。  
 リクエストには必ず `request` というキーが含まれ、その値がリクエストの種類を示します。  
+また、名前リクエストを除き、`info` というキーが含まれます。  
 他のキーは、以下の通りです。
 - info: ゲームの現状態を示す情報
 - setting: ゲームの設定を示す情報
@@ -123,23 +125,9 @@
 エージェントは、このリクエストを受信した際に、囁きやトークの自然言語の文字列を返す必要があります。  
 サーバ側が送信する履歴は、前回のエージェントに対する送信の差分のみであり、全ての履歴を送信するわけではありません。
 
+**ゲームの現状態を示す情報 (info)**  
 **トークの履歴を示す情報 (talkHistory)**  
 **囁きの履歴を示す情報 (whisperHistory)**
-
-```
-    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[]}
-    dummy_client.go:69: send: 5afa42dd02ce60eca49c80e7f059ab95
-```
-
-```
-    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[01]","text":"5afa42dd02ce60eca49c80e7f059ab95"}]}
-    dummy_client.go:69: send: f086ef4b8251aa484faca6467d55aeef
-```
-
-```
-    dummy_client.go:50: recv: {"request":"TALK","talkHistory":[{"idx":0,"day":0,"turn":0,"agent":"Agent[01]","text":"5afa42dd02ce60eca49c80e7f059ab95"},{"idx":1,"day":0,"turn":0,"agent":"Agent[04]","text":"f086ef4b8251aa484faca6467d55aeef"}]}
-    dummy_client.go:69: send: a4e9af9221189dc8cfaf4e051c141e1e
-```
 
 ### 昼終了リクエスト (DAILY_FINISH)
 
@@ -148,12 +136,9 @@
 直前までの会話の履歴が送信されます。  
 ゲーム全体の人狼の役職が2人未満で囁きフェーズが存在しない場合においても、人狼の役職に対しては、囁きの履歴が送信されます。
 
+**ゲームの現状態を示す情報 (info)**  
 **トークの履歴を示す情報 (talkHistory)**  
 **囁きの履歴を示す情報 (whisperHistory)**
-
-```
-    dummy_client.go:50: recv: {"request":"DAILY_FINISH","talkHistory":[{"idx":10,"day":0,"turn":2,"agent":"Agent[01]","text":"Over"},{"idx":11,"day":0,"turn":2,"agent":"Agent[04]","text":"Over"},{"idx":12,"day":0,"turn":2,"agent":"Agent[05]","text":"Over"},{"idx":13,"day":0,"turn":2,"agent":"Agent[03]","text":"Over"},{"idx":14,"day":0,"turn":2,"agent":"Agent[02]","text":"Over"}]}
-```
 
 ### 占いリクエスト (DIVINE)
 
@@ -161,10 +146,7 @@
 占い師のみに送信されます。  
 エージェントは、このリクエストを受信した際に、占いの対象となるエージェントのインデックス付き文字列を返す必要があります。
 
-```
-    dummy_client.go:50: recv: {"request":"DIVINE"}
-    dummy_client.go:69: send: Agent[02]
-```
+**ゲームの現状態を示す情報 (info)**  
 
 ### 護衛リクエスト (GUARD)
 
@@ -172,20 +154,14 @@
 騎士のみに送信されます。
 エージェントは、このリクエストを受信した際に、護衛の対象となるエージェントのインデックス付き文字列を返す必要があります。
 
-```
-    dummy_client.go:50: recv: {"request":"GUARD"}
-    dummy_client.go:69: send: Agent[03]
-```
+**ゲームの現状態を示す情報 (info)**  
 
 ### 投票リクエスト (VOTE)
 
 投票リクエストは、追放するエージェントを投票する際に送信されるリクエストです。  
 エージェントは、このリクエストを受信した際に、投票の対象となるエージェントのインデックス付き文字列を返す必要があります。
 
-```
-    dummy_client.go:50: recv: {"request":"VOTE"}
-    dummy_client.go:69: send: Agent[04]
-```
+**ゲームの現状態を示す情報 (info)**  
 
 ### 襲撃リクエスト (ATTACK)
 
@@ -195,12 +171,8 @@
 直前までの会話の履歴が送信されます。  
 ゲーム全体の人狼の役職が2人未満で囁きフェーズが存在しない場合においても、人狼の役職に対しては、囁きの履歴が送信されます。
 
+**ゲームの現状態を示す情報 (info)**  
 **会話の履歴を示す情報 (whisperHistory)**
-
-```
-    dummy_client.go:50: recv: {"request":"ATTACK","whisperHistory":[]}
-    dummy_client.go:69: send: Agent[05]
-```
 
 ### ゲーム終了リクエスト (FINISH)
 
@@ -210,5 +182,3 @@
 
 **ゲームの現状態を示す情報 (info)**  
 なお、`roleMap` は自分以外も含めたすべてのエージェントの役職が含まれます。
-
-具体例はログを参照してください。

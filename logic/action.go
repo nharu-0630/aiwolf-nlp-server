@@ -27,7 +27,7 @@ func (g *Game) doExecution() {
 	if executed != nil {
 		g.GameStatuses[g.CurrentDay].StatusMap[*executed] = model.S_DEAD
 		g.GameStatuses[g.CurrentDay].ExecutedAgent = executed
-		slog.Info("追放結果を設定しました", "id", g.ID, "agent", executed.Name)
+		slog.Info("追放結果を設定しました", "id", g.ID, "agent", executed.String())
 
 		g.GameStatuses[g.CurrentDay].MediumResult = &model.Judge{
 			Day:    g.GameStatuses[g.CurrentDay].Day,
