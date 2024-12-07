@@ -12,17 +12,18 @@ import (
 func (g *Game) doExecution() {
 	slog.Info("追放フェーズを開始します", "id", g.ID, "day", g.CurrentDay)
 	var executed *model.Agent
-	candidates := make([]*model.Agent, 0)
+	candidates := make([]model.Agent, 0)
 	for i := 0; i < g.Settings.MaxRevote; i++ {
 		g.executeVote()
 		candidates = g.getVotedCandidates(g.GameStatuses[g.CurrentDay].Votes)
 		if len(candidates) == 1 {
-			executed = candidates[0]
+			executed = &candidates[0]
 			break
 		}
 	}
-	if executed == nil {
-		executed = util.SelectRandomAgent(candidates)
+	if executed == nil && len(candidates) > 0 {
+		rand := util.SelectRandomAgent(candidates)
+		executed = &rand
 	}
 	if executed != nil {
 		g.GameStatuses[g.CurrentDay].StatusMap[*executed] = model.S_DEAD
@@ -50,16 +51,18 @@ func (g *Game) doAttack() {
 	var attacked *model.Agent
 	werewolfs := g.getAliveWerewolves()
 	if len(werewolfs) > 0 {
+		candidates := make([]model.Agent, 0)
 		for i := 0; i < g.Settings.MaxAttackRevote; i++ {
 			g.executeAttackVote()
-			candidates := g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVotes)
+			candidates = g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVotes)
 			if len(candidates) == 1 {
-				attacked = candidates[0]
+				attacked = &candidates[0]
 				break
 			}
 		}
-		if attacked == nil && !g.Settings.IsEnableNoAttack {
-			attacked = util.SelectRandomAgent(g.getAttackVotedCandidates(g.GameStatuses[g.CurrentDay].AttackVotes))
+		if attacked == nil && !g.Settings.IsEnableNoAttack && len(candidates) > 0 {
+			rand := util.SelectRandomAgent(candidates)
+			attacked = &rand
 		}
 
 		if attacked != nil && !g.isGuarded(attacked) {

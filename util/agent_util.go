@@ -7,10 +7,7 @@ import (
 	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
-func SelectRandomAgent(agents []*model.Agent) *model.Agent {
-	if len(agents) == 0 {
-		return nil
-	}
+func SelectRandomAgent(agents []model.Agent) model.Agent {
 	return agents[rand.Intn(len(agents))]
 }
 

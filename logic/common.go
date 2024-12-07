@@ -26,15 +26,15 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 	return target, nil
 }
 
-func (g *Game) getVotedCandidates(votes []model.Vote) []*model.Agent {
+func (g *Game) getVotedCandidates(votes []model.Vote) []model.Agent {
 	return util.GetCandidates(votes, func(vote model.Vote) bool {
 		return true
 	})
 }
 
-func (g *Game) getAttackVotedCandidates(votes []model.Vote) []*model.Agent {
+func (g *Game) getAttackVotedCandidates(votes []model.Vote) []model.Agent {
 	return util.GetCandidates(votes, func(vote model.Vote) bool {
-		return vote.Target.Role.Team != model.T_WEREWOLF
+		return vote.Target.Role.Species != model.S_WEREWOLF
 	})
 }
 
