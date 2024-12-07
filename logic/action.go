@@ -254,7 +254,7 @@ func (g *Game) conductCommunication(request model.Request) {
 	for i := 0; i < maxTurn; i++ {
 		cnt := false
 		for _, agent := range agents {
-			if remainMap[*agent] == 0 {
+			if remainMap[*agent] <= 0 {
 				continue
 			}
 			text := g.getTalkWhisperText(agent, request, skipMap, remainMap)
@@ -314,7 +314,7 @@ func (g *Game) getTalkWhisperText(agent *model.Agent, request model.Request, ski
 		text = model.T_SKIP
 		slog.Warn("強制スキップが指定されたため、発言をスキップに置換しました", "id", g.ID, "agent", agent.String())
 	}
-	if text != model.T_OVER && text != model.T_SKIP && text != model.T_FORCE_SKIP {
+	if text != model.T_OVER && text != model.T_SKIP {
 		skipMap[*agent] = 0
 		slog.Info("発言がオーバーもしくはスキップではないため、スキップ回数をリセットしました", "id", g.ID, "agent", agent.String())
 	}
