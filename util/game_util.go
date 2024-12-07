@@ -7,35 +7,26 @@ import (
 )
 
 func CountAliveTeams(statusMap map[model.Agent]model.Status) (int, int) {
-	var villagers, werewolfs int
+	var humans, werewolfs int
 	for agent, status := range statusMap {
 		if status == model.S_ALIVE {
-			switch agent.Role.Team {
-			case model.T_VILLAGER:
-				villagers++
-			case model.T_WEREWOLF:
+			switch agent.Role.Species {
+			case model.S_HUMAN:
+				humans++
+			case model.S_WEREWOLF:
 				werewolfs++
 			}
 		}
 	}
-	return villagers, werewolfs
+	return humans, werewolfs
 }
 
 func CalcWinSideTeam(statusMap map[model.Agent]model.Status) model.Team {
-	werewolf_role := 0
-	for agent, status := range statusMap {
-		if status == model.S_ALIVE && agent.Role == model.R_WEREWOLF {
-			werewolf_role++
-		}
-	}
-	if werewolf_role == 0 {
-		return model.T_VILLAGER
-	}
-
-	villager_team, werewolf_team := CountAliveTeams(statusMap)
-	if villager_team == 0 {
+	humans, werewolfs := CountAliveTeams(statusMap)
+	if humans <= werewolfs {
 		return model.T_WEREWOLF
-	} else if werewolf_team == 0 {
+	}
+	if werewolfs == 0 {
 		return model.T_VILLAGER
 	}
 	return model.T_NONE
