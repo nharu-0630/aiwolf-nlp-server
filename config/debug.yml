@@ -43,7 +43,7 @@ api_service:
 
 deprecated_log_service:
   enable: true # 従来形式のログ出力サービスを有効にするか
-  output_dir: "./log" # ログの出力ディレクトリ
+  output_dir: "./../log" # ログの出力ディレクトリ
   filename: "{game_id}" # ログのファイル名
 
 match_optimizer:

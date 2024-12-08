@@ -71,12 +71,12 @@ func (g *Game) doAttack() {
 			if g.DeprecatedLogService != nil {
 				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attack,%d,true", g.CurrentDay, attacked.Idx))
 			}
-			slog.Info("襲撃結果を設定しました", "id", g.ID, "agent", attacked.Name)
+			slog.Info("襲撃結果を設定しました", "id", g.ID, "agent", attacked.String())
 		} else if attacked != nil {
 			if g.DeprecatedLogService != nil {
 				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attack,%d,false", g.CurrentDay, attacked.Idx))
 			}
-			slog.Info("護衛されたため、襲撃結果を設定しません", "id", g.ID, "agent", attacked.Name)
+			slog.Info("護衛されたため、襲撃結果を設定しません", "id", g.ID, "agent", attacked.String())
 		} else {
 			if g.DeprecatedLogService != nil {
 				g.DeprecatedLogService.AppendLog(g.ID, fmt.Sprintf("%d,attack,-1,true", g.CurrentDay))

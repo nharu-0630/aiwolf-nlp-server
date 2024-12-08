@@ -101,7 +101,10 @@ func (a *AnalysisService) TrackEndRequest(id string, agent model.Agent, response
 			"response_timestamp": timestamp / 1e6,
 		}
 		if request, ok := gameData.requestMap[agent.Name]; ok {
-			entry["request"] = request
+			jsonData, err := json.Marshal(request)
+			if err == nil {
+				entry["request"] = string(jsonData)
+			}
 		}
 		if response != "" {
 			entry["response"] = response
