@@ -91,7 +91,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 		slog.Info("NAMEパケットを送信しました", "agent", a.String())
 		select {
 		case res := <-responseChan:
-			if string(res) == a.String() {
+			if strings.TrimRight(string(res), "\n") == a.Name {
 				slog.Info("NAMEリクエストのレスポンスを受信しました", "agent", a.String(), "response", string(res))
 				return "", errors.New("リクエストのレスポンス受信がタイムアウトしました")
 			} else {
