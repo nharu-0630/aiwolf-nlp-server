@@ -67,7 +67,7 @@ func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Du
 			slog.Info("レスポンスを受信しました", "agent", a.String(), "response", string(res))
 			return strings.TrimRight(string(res), "\n"), nil
 		case err := <-errChan:
-			if websocket.IsUnexpectedCloseError(err) || websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 				slog.Error("接続が閉じられました", "error", err)
 				a.HasError = true
 				return "", err
