@@ -41,8 +41,8 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(matches []map[model.Role
 	}
 
 	var readyMatch = map[model.Role][]string{}
-	ready := true
 	for _, match := range matches {
+		ready := true
 		for _, teams := range match {
 			for _, team := range teams {
 				if len(wr.connections[team]) == 0 {
@@ -59,7 +59,7 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(matches []map[model.Role
 			break
 		}
 	}
-	if !ready {
+	if len(readyMatch) == 0 {
 		return nil, errors.New("スケジュールされたマッチ内に不足しているチームがあります")
 	}
 	slog.Info("スケジュールされたマッチの接続を取得しました")
