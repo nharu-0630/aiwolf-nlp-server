@@ -27,12 +27,32 @@ const (
 	T_NONE     Team = "NONE"
 )
 
+func TeamFromString(s string) Team {
+	switch s {
+	case "VILLAGER":
+		return T_VILLAGER
+	case "WEREWOLF":
+		return T_WEREWOLF
+	}
+	return T_NONE
+}
+
 type Species string
 
 const (
 	S_HUMAN    Species = "HUMAN"
 	S_WEREWOLF Species = "WEREWOLF"
 )
+
+func SpeciesFromString(s string) Species {
+	switch s {
+	case "HUMAN":
+		return S_HUMAN
+	case "WEREWOLF":
+		return S_WEREWOLF
+	}
+	return ""
+}
 
 func (r Role) String() string {
 	return r.Name

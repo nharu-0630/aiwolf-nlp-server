@@ -16,9 +16,10 @@ var (
 
 func main() {
 	var (
-		configPath  = flag.String("c", "./default.yml", "設定ファイルのパス")
-		showVersion = flag.Bool("v", false, "バージョンを表示")
-		showHelp    = flag.Bool("h", false, "ヘルプを表示")
+		configPath   = flag.String("c", "./default.yml", "設定ファイルのパス")
+		analyzerMode = flag.Bool("a", false, "解析モード")
+		showVersion  = flag.Bool("v", false, "バージョンを表示")
+		showHelp     = flag.Bool("h", false, "ヘルプを表示")
 	)
 	flag.Parse()
 
@@ -38,6 +39,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	if *analyzerMode {
+		core.Analyzer(*config)
+		return
+	}
+
 	server := core.NewServer(*config)
 	server.Run()
 }

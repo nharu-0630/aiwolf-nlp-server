@@ -1,14 +1,12 @@
-package core
+package model
 
 import (
 	"encoding/json"
-
-	"github.com/kano-lab/aiwolf-nlp-server/model"
 )
 
 type MatchWeight struct {
-	RoleIdxs map[model.Role][]int `json:"role_idxs"`
-	Weight   float64              `json:"weight"`
+	RoleIdxs map[Role][]int `json:"role_idxs"`
+	Weight   float64        `json:"weight"`
 }
 
 func (mw MatchWeight) Equal(other MatchWeight) bool {

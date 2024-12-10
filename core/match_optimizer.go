@@ -21,7 +21,7 @@ type MatchOptimizer struct {
 	GameCount        int                    `json:"game_count"`
 	RoleNumMap       map[model.Role]int     `json:"role_num_map"`
 	IdxTeamMap       map[int]string         `json:"idx_team_map"`
-	ScheduledMatches []MatchWeight          `json:"scheduled_matches"`
+	ScheduledMatches []model.MatchWeight    `json:"scheduled_matches"`
 	EndedMatches     []map[model.Role][]int `json:"ended_matches"`
 }
 
@@ -37,14 +37,14 @@ func (mo *MatchOptimizer) MarshalJSON() ([]byte, error) {
 			endedMatches[i][role.String()] = idxs
 		}
 	}
-	scheduledMatches := make([]MatchWeight, len(mo.ScheduledMatches))
+	scheduledMatches := make([]model.MatchWeight, len(mo.ScheduledMatches))
 	copy(scheduledMatches, mo.ScheduledMatches)
 	type Alias MatchOptimizer
 	return json.Marshal(&struct {
 		*Alias
-		RoleNumMap       map[string]int     `json:"role_num_map"`
-		EndedMatches     []map[string][]int `json:"ended_matches"`
-		ScheduledMatches []MatchWeight      `json:"scheduled_matches"`
+		RoleNumMap       map[string]int      `json:"role_num_map"`
+		EndedMatches     []map[string][]int  `json:"ended_matches"`
+		ScheduledMatches []model.MatchWeight `json:"scheduled_matches"`
 	}{
 		Alias:            (*Alias)(mo),
 		RoleNumMap:       roleNumMap,
@@ -80,9 +80,9 @@ func (mo *MatchOptimizer) UnmarshalJSON(data []byte) error {
 			mo.EndedMatches[i][model.RoleFromString(role)] = idxs
 		}
 	}
-	mo.ScheduledMatches = make([]MatchWeight, len(aux.ScheduledMatches))
+	mo.ScheduledMatches = make([]model.MatchWeight, len(aux.ScheduledMatches))
 	for i, scheduledMatch := range aux.ScheduledMatches {
-		mo.ScheduledMatches[i] = MatchWeight{
+		mo.ScheduledMatches[i] = model.MatchWeight{
 			RoleIdxs: make(map[model.Role][]int),
 			Weight:   scheduledMatch.Weight,
 		}
@@ -195,7 +195,7 @@ func (mo *MatchOptimizer) initialize() error {
 
 		if success {
 			for _, match := range matches {
-				mw := MatchWeight{
+				mw := model.MatchWeight{
 					RoleIdxs: match,
 					Weight:   1.0,
 				}
@@ -209,7 +209,7 @@ func (mo *MatchOptimizer) initialize() error {
 
 	if bestMatches != nil {
 		for _, match := range bestMatches {
-			mw := MatchWeight{
+			mw := model.MatchWeight{
 				RoleIdxs: match,
 				Weight:   1.0,
 			}
@@ -245,7 +245,7 @@ func (mo *MatchOptimizer) append() error {
 
 		if success {
 			for _, match := range matches {
-				mw := MatchWeight{
+				mw := model.MatchWeight{
 					RoleIdxs: match,
 					Weight:   1.0,
 				}
@@ -259,7 +259,7 @@ func (mo *MatchOptimizer) append() error {
 
 	if bestMatches != nil {
 		for _, match := range bestMatches {
-			mw := MatchWeight{
+			mw := model.MatchWeight{
 				RoleIdxs: match,
 				Weight:   1.0,
 			}
@@ -278,7 +278,7 @@ func (mo *MatchOptimizer) setMatchEnd(match map[model.Role][]string) {
 	idxMatch := util.TeamNameMatchToIdxMatch(mo.IdxTeamMap, match)
 
 	for i, scheduledMatch := range mo.ScheduledMatches {
-		if scheduledMatch.Equal(MatchWeight{RoleIdxs: idxMatch}) {
+		if scheduledMatch.Equal(model.MatchWeight{RoleIdxs: idxMatch}) {
 			mo.ScheduledMatches = append(mo.ScheduledMatches[:i], mo.ScheduledMatches[i+1:]...)
 			slog.Info("スケジュールされたマッチから削除しました", "length", len(mo.ScheduledMatches))
 
@@ -297,7 +297,7 @@ func (mo *MatchOptimizer) setMatchWeight(match map[model.Role][]string, weight f
 	idxMatch := util.TeamNameMatchToIdxMatch(mo.IdxTeamMap, match)
 
 	for i, scheduledMatch := range mo.ScheduledMatches {
-		if scheduledMatch.Equal(MatchWeight{RoleIdxs: idxMatch}) {
+		if scheduledMatch.Equal(model.MatchWeight{RoleIdxs: idxMatch}) {
 			mo.ScheduledMatches[i].Weight = weight
 			slog.Info("スケジュールされたマッチの重みを設定しました", "weight", weight)
 			mo.save()
