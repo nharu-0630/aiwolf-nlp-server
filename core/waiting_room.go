@@ -39,26 +39,27 @@ func (wr *WaitingRoom) GetConnectionsWithMatchOptimizer(matches []map[model.Role
 	if len(matches) == 0 {
 		return nil, errors.New("スケジュールされたマッチがありません")
 	}
-
-	var readyMatch = map[model.Role][]string{}
+	readyMatch := map[model.Role][]string{}
 	for _, match := range matches {
-		ready := true
+		isMatchReady := true
 		for _, teams := range match {
 			for _, team := range teams {
-				if len(wr.connections[team]) == 0 {
-					ready = false
+				if _, exists := wr.connections[team]; !exists || len(wr.connections[team]) == 0 {
+					isMatchReady = false
 					break
 				}
 			}
-			if !ready {
+			if !isMatchReady {
 				break
 			}
 		}
-		if ready {
+
+		if isMatchReady {
 			readyMatch = match
 			break
 		}
 	}
+
 	if len(readyMatch) == 0 {
 		return nil, errors.New("スケジュールされたマッチ内に不足しているチームがあります")
 	}
