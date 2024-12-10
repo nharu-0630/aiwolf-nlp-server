@@ -19,6 +19,7 @@ type Game struct {
 	GameStatuses         map[int]*model.GameStatus
 	LastTalkIdxMap       map[*model.Agent]int
 	LastWhisperIdxMap    map[*model.Agent]int
+	IsFinished           bool
 	AnalysisService      *service.AnalysisService
 	DeprecatedLogService *service.DeprecatedLogService
 }
@@ -39,6 +40,7 @@ func NewGame(config *model.Config, settings *model.Settings, conns []model.Conne
 		GameStatuses:      gameStatuses,
 		LastTalkIdxMap:    make(map[*model.Agent]int),
 		LastWhisperIdxMap: make(map[*model.Agent]int),
+		IsFinished:        false,
 	}
 }
 
@@ -58,6 +60,7 @@ func NewGameWithRole(config *model.Config, settings *model.Settings, roleMapConn
 		GameStatuses:      gameStatuses,
 		LastTalkIdxMap:    make(map[*model.Agent]int),
 		LastWhisperIdxMap: make(map[*model.Agent]int),
+		IsFinished:        false,
 	}
 }
 
@@ -107,6 +110,7 @@ func (g *Game) Start() model.Team {
 		g.DeprecatedLogService.TrackEndGame(g.ID)
 	}
 	slog.Info("ゲームが終了しました", "id", g.ID, "winSide", winSide)
+	g.IsFinished = true
 	return winSide
 }
 
