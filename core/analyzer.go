@@ -2,6 +2,7 @@ package core
 
 import (
 	"bufio"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -12,9 +13,15 @@ import (
 )
 
 func Analyzer(config model.Config) {
-	mo, err := NewMatchOptimizer(config)
+	data, err := os.ReadFile(config.MatchOptimizer.OutputPath)
 	if err != nil {
 		slog.Warn("マッチオプティマイザの読み込みに失敗しました", "error", err)
+		return
+	}
+	var mo MatchOptimizer
+	if err := json.Unmarshal(data, &mo); err != nil {
+		slog.Error("マッチオプティマイザのパースに失敗しました", "error", err)
+		return
 	}
 
 	slog.Info("MatchOptimizer")
