@@ -114,20 +114,23 @@ func Analyzer(config model.Config) {
 				if _, exists := counts[team][role]; !exists {
 					counts[team][role] = &Count{}
 				}
-				if *winSide == model.T_VILLAGER && role != model.R_WEREWOLF && role != model.R_POSSESSED {
-					counts[team][role].Win++
-				} else if *winSide == model.T_WEREWOLF && (role == model.R_WEREWOLF || role == model.R_POSSESSED) {
-					counts[team][role].Win++
-				} else {
-					counts[team][role].Lose++
-				}
+
 				if slices.Contains(errorTeams, team) {
 					counts[team][role].Error++
 				}
+
 				if *winSide == model.T_NONE {
 					counts[team][role].None++
 				} else {
 					counts[team][role].Succeed++
+
+					if *winSide == model.T_VILLAGER && role != model.R_WEREWOLF && role != model.R_POSSESSED {
+						counts[team][role].Win++
+					} else if *winSide == model.T_WEREWOLF && (role == model.R_WEREWOLF || role == model.R_POSSESSED) {
+						counts[team][role].Win++
+					} else {
+						counts[team][role].Lose++
+					}
 				}
 			}
 		}
