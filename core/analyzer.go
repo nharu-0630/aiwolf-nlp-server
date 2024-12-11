@@ -24,9 +24,9 @@ func Analyzer(config model.Config) {
 		return
 	}
 
-	slog.Info("MatchOptimizer")
+	slog.Info("マッチオプティマイザの統計データを分析します")
 	for idx, team := range mo.IdxTeamMap {
-		slog.Info("IdxTeamMap", "idx", idx, "team", team)
+		slog.Info("登録済みチームを取得しました", "idx", idx, "team", team)
 
 		scheduledRoles := make(map[model.Role]int)
 		for _, match := range mo.ScheduledMatches {
@@ -38,7 +38,7 @@ func Analyzer(config model.Config) {
 				}
 			}
 		}
-		slog.Info("ScheduledRoles", "idx", idx, "roles", scheduledRoles)
+		slog.Info("スケジュールされた役職を取得しました", "idx", idx, "roles", scheduledRoles)
 
 		endedRoles := make(map[model.Role]int)
 		for _, match := range mo.EndedMatches {
@@ -50,11 +50,11 @@ func Analyzer(config model.Config) {
 				}
 			}
 		}
-		slog.Info("EndedRoles", "idx", idx, "roles", endedRoles)
+		slog.Info("終了した役職を取得しました", "idx", idx, "roles", endedRoles)
 	}
 
 	if config.DeprecatedLogService.Enable {
-		slog.Info("DeprecatedLogService")
+		slog.Info("ログサービスの統計データを分析します")
 
 		filePaths, err := filepath.Glob(filepath.Join(config.DeprecatedLogService.OutputDir, "*.log"))
 		if err != nil {
@@ -72,27 +72,39 @@ func Analyzer(config model.Config) {
 
 			teamsRole := make(map[string]model.Role)
 			errorTeams := []string{}
-			winSide := model.T_NONE
+			var winSide *model.Team
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				line := scanner.Text()
 				values := strings.Split(line, ",")
-				if values[0] == "0" && values[1] == "status" {
-					team := strings.TrimRight(values[5], "1234567890")
-					role := model.RoleFromString(values[3])
-					teamsRole[team] = role
-				}
-				if values[1] == "status" {
-					team := strings.TrimRight(values[5], "1234567890")
-					status := values[4]
-					if status == "" {
-						errorTeams = append(errorTeams, team)
+				if len(values) == 6 && values[1] == "status" {
+					if values[0] == "0" {
+						team := strings.TrimRight(values[5], "1234567890")
+						role := model.RoleFromString(values[3])
+						teamsRole[team] = role
+					} else {
+						team := strings.TrimRight(values[5], "1234567890")
+						status := values[4]
+						if status == "" {
+							errorTeams = append(errorTeams, team)
+						}
 					}
 				}
-				if values[1] == "result" {
-					winSide = model.TeamFromString(values[4])
+				if len(values) == 5 && values[1] == "result" {
+					side := model.TeamFromString(values[4])
+					winSide = &side
 				}
+			}
+
+			if len(teamsRole) == 0 {
+				slog.Warn("役職が取得できませんでした", "file", filePath)
+				continue
+			}
+
+			if winSide == nil {
+				slog.Warn("結果が取得できませんでした", "file", filePath)
+				continue
 			}
 
 			for team, role := range teamsRole {
@@ -103,16 +115,16 @@ func Analyzer(config model.Config) {
 					counts[team][role] = &Count{}
 				}
 				counts[team][role].GameCount++
-				if winSide == model.T_VILLAGER && role != model.R_WEREWOLF && role != model.R_POSSESSED {
+				if *winSide == model.T_VILLAGER && role != model.R_WEREWOLF && role != model.R_POSSESSED {
 					counts[team][role].WinCount++
 				}
-				if winSide == model.T_WEREWOLF && (role == model.R_WEREWOLF || role == model.R_POSSESSED) {
+				if *winSide == model.T_WEREWOLF && (role == model.R_WEREWOLF || role == model.R_POSSESSED) {
 					counts[team][role].WinCount++
 				}
 				if slices.Contains(errorTeams, team) {
 					counts[team][role].ErrorCount++
 				}
-				if winSide == model.T_NONE {
+				if *winSide == model.T_NONE {
 					counts[team][role].NoneCount++
 				}
 			}
@@ -120,7 +132,7 @@ func Analyzer(config model.Config) {
 
 		for team, roles := range counts {
 			for role, count := range roles {
-				slog.Info("Count", "team", team, "role", role, "count", count)
+				slog.Info("統計データを取得しました", "team", team, "role", role, "count", count)
 			}
 		}
 	}
