@@ -136,16 +136,16 @@ func Analyzer(config model.Config) {
 		}
 
 		for team, roles := range counts {
-			count := &Count{}
+			global := &Count{}
 			for role, count := range roles {
 				slog.Info("統計データを取得しました", "team", team, "role", role, "win", count.Win, "lose", count.Lose, "error", count.Error, "none", count.None, "succeed", count.Succeed)
-				count.Win += count.Win
-				count.Lose += count.Lose
-				count.Error += count.Error
-				count.None += count.None
-				count.Succeed += count.Succeed
+				global.Win += count.Win
+				global.Lose += count.Lose
+				global.Error += count.Error
+				global.None += count.None
+				global.Succeed += count.Succeed
 			}
-			slog.Info("統計データを取得しました", "team", team, "win", count.Win, "lose", count.Lose, "error", count.Error, "none", count.None, "succeed", count.Succeed)
+			slog.Info("統計データを取得しました", "team", team, "win", global.Win, "lose", global.Lose, "error", global.Error, "none", global.None, "succeed", global.Succeed)
 		}
 	}
 }
