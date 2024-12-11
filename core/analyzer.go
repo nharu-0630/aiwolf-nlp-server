@@ -114,18 +114,20 @@ func Analyzer(config model.Config) {
 				if _, exists := counts[team][role]; !exists {
 					counts[team][role] = &Count{}
 				}
-				counts[team][role].GameCount++
 				if *winSide == model.T_VILLAGER && role != model.R_WEREWOLF && role != model.R_POSSESSED {
-					counts[team][role].WinCount++
-				}
-				if *winSide == model.T_WEREWOLF && (role == model.R_WEREWOLF || role == model.R_POSSESSED) {
-					counts[team][role].WinCount++
+					counts[team][role].Win++
+				} else if *winSide == model.T_WEREWOLF && (role == model.R_WEREWOLF || role == model.R_POSSESSED) {
+					counts[team][role].Win++
+				} else {
+					counts[team][role].Lose++
 				}
 				if slices.Contains(errorTeams, team) {
-					counts[team][role].ErrorCount++
+					counts[team][role].Error++
 				}
 				if *winSide == model.T_NONE {
-					counts[team][role].NoneCount++
+					counts[team][role].None++
+				} else {
+					counts[team][role].Succeed++
 				}
 			}
 		}
@@ -139,8 +141,9 @@ func Analyzer(config model.Config) {
 }
 
 type Count struct {
-	GameCount  int
-	WinCount   int
-	ErrorCount int
-	NoneCount  int
+	Succeed int
+	None    int
+	Win     int
+	Lose    int
+	Error   int
 }
