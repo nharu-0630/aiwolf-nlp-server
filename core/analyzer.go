@@ -134,7 +134,7 @@ func Analyzer(config model.Config) {
 
 		for team, roles := range counts {
 			for role, count := range roles {
-				slog.Info("統計データを取得しました", "team", team, "role", role, "count", count)
+				slog.Info("統計データを取得しました", "team", team, "role", role, "win", count.Win, "lose", count.Lose, "error", count.Error, "none", count.None, "succeed", count.Succeed)
 			}
 		}
 	}
