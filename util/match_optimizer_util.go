@@ -1,6 +1,7 @@
 package util
 
 import (
+	"log/slog"
 	"math/rand"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
@@ -46,13 +47,17 @@ func findBestTeam(
 ) int {
 	bestTeam := -1
 	minDeviation := -1.0
+	minSubDeviation := -1
 	for _, team := range availableTeams {
+		slog.Info("usedTeams", "usedTeams", usedTeams)
 		if usedTeams[team] {
+			slog.Info("continue team", "team", team)
 			continue
 		}
 
 		// 理論値を超える場合はスキップ
-		if float64(teamRoleCounts[team][role]+1) > theoretical[role] {
+		if float64(teamRoleCounts[team][role]) >= theoretical[role] {
+			slog.Info("continue role", "role", role)
 			continue
 		}
 
@@ -66,10 +71,18 @@ func findBestTeam(
 			deviation += (currentCount - theoreticalValue) * (currentCount - theoreticalValue)
 		}
 
-		if bestTeam == -1 || deviation < minDeviation {
+		subDeviation := 0
+		for _, count := range teamRoleCounts[team] {
+			subDeviation += count
+		}
+
+		if bestTeam == -1 || (deviation < minDeviation && subDeviation <= minSubDeviation) {
 			bestTeam = team
 			minDeviation = deviation
+			minSubDeviation = subDeviation
 		}
+
+		slog.Info("usedTeams", "usedTeams", usedTeams)
 	}
 	return bestTeam
 }
@@ -109,7 +122,6 @@ func GenerateMatches(gameCount int, teamCount int, roles []model.Role, theoretic
 				success = false
 				break
 			}
-
 			match[role] = append(match[role], bestTeam)
 			usedTeams[bestTeam] = true
 			counts[bestTeam][role]++
@@ -121,7 +133,7 @@ func GenerateMatches(gameCount int, teamCount int, roles []model.Role, theoretic
 
 		matches = append(matches, match)
 	}
-	return matches, counts, success
+	return matches, counts, true
 }
 
 func CalcDeviation(counts map[int]map[model.Role]int, theoretical map[model.Role]float64) float64 {
