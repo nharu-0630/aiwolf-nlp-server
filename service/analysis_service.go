@@ -110,7 +110,7 @@ func (a *AnalysisService) TrackEndRequest(id string, agent model.Agent, response
 			entry["response"] = response
 		}
 		if err != nil {
-			entry["error"] = err
+			entry["error"] = err.Error()
 		}
 		gameData.entries = append(gameData.entries, entry)
 		delete(gameData.timestampMap, agent.Name)

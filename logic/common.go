@@ -3,7 +3,6 @@ package logic
 import (
 	"errors"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
@@ -15,9 +14,6 @@ func (g *Game) findTargetByRequest(agent *model.Agent, request model.Request) (*
 	if err != nil {
 		return nil, err
 	}
-	name = strings.Trim(name, " ")
-	name = strings.Trim(name, "\n")
-	name = strings.Trim(name, "\r")
 	target := util.FindAgentByName(g.Agents, name)
 	if target == nil {
 		return nil, errors.New("対象エージェントが見つかりません")
@@ -79,7 +75,7 @@ func (g *Game) requestToAgent(agent *model.Agent, request model.Request) (string
 	if g.AnalysisService != nil {
 		g.AnalysisService.TrackStartRequest(g.ID, *agent, packet)
 	}
-	resp, err := agent.SendPacket(packet, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond)
+	resp, err := agent.SendPacket(packet, time.Duration(g.Settings.ActionTimeout)*time.Millisecond, time.Duration(g.Settings.ResponseTimeout)*time.Millisecond, g.Config.Game.Timeout.Acceptable)
 	if g.AnalysisService != nil {
 		g.AnalysisService.TrackEndRequest(g.ID, *agent, resp, err)
 	}

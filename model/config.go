@@ -44,8 +44,9 @@ type Config struct {
 			AllowNoTarget bool `yaml:"allow_no_target"`
 		} `yaml:"attack"`
 		Timeout struct {
-			Action   time.Duration `yaml:"action"`
-			Response time.Duration `yaml:"response"`
+			Action     time.Duration `yaml:"action"`
+			Response   time.Duration `yaml:"response"`
+			Acceptable time.Duration `yaml:"acceptable"`
 		} `yaml:"timeout"`
 	} `yaml:"game"`
 	AnalysisService struct {

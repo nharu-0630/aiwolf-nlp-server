@@ -30,6 +30,7 @@ game:
   timeout:
     action: 60s # エージェントのアクションのタイムアウト時間
     response: 120s # エージェントの生存確認のタイムアウト時間
+    acceptable: 5s # サーバ側での猶予時間
 
 analysis_service:
   enable: true # 分析サービスを有効にするか

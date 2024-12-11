@@ -33,7 +33,7 @@ func NewAgent(idx int, role Role, conn Connection) (*Agent, error) {
 	return agent, nil
 }
 
-func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout time.Duration) (string, error) {
+func (a *Agent) SendPacket(packet Packet, actionTimeout, responseTimeout, acceptableTimeout time.Duration) (string, error) {
 	if a.HasError {
 		slog.Error("エージェントにエラーが発生しているため、リクエストを送信できません", "agent", a.String())
 		return "", errors.New("エージェントにエラーが発生しているため、リクエストを送信できません")
