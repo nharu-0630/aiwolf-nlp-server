@@ -31,7 +31,10 @@ func TestInitializeMatchOptimizer(t *testing.T) {
 		}
 	}
 	t.Log(roleCounts)
-	slog.Info("チームの役職統計を取得しました", "role_counts", roleCounts)
+
+	for i := 0; i < mo.TeamCount; i++ {
+		slog.Info("team", "idx", i, "roles", roleCounts[i])
+	}
 }
 
 func TestLoadMatchOptimizer(t *testing.T) {

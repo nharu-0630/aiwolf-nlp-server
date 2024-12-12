@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -171,89 +172,31 @@ func (mo *MatchOptimizer) updateTeam(team string) {
 
 func (mo *MatchOptimizer) initialize() error {
 	mo.mu.Lock()
-	defer mo.mu.Unlock()
 	slog.Info("マッチオプティマイザを初期化します")
 	mo.EndedMatches = []map[model.Role][]int{}
-
-	theoretical, roles := util.CalcTheoretical(mo.RoleNumMap, mo.GameCount, mo.TeamCount)
-	slog.Info("各役職の理論値を計算しました", "theoretical", theoretical)
-
-	maxAttempts := mo.GameCount * mo.TeamCount * 5
-	var bestMatches []map[model.Role][]int
-	bestDeviation := -1.0
-	slog.Info("マッチング最適化を開始します", "attempts", maxAttempts)
-
-	for attempt := 0; attempt < maxAttempts; attempt++ {
-		matches, counts, success := util.GenerateMatches(mo.GameCount, mo.TeamCount, roles, theoretical)
-		deviation := util.CalcDeviation(counts, theoretical)
-
-		if bestMatches == nil || deviation < bestDeviation {
-			slog.Info("より良い解が見つかりました", "deviation", deviation)
-			bestMatches = matches
-			bestDeviation = deviation
-		}
-
-		if success {
-			for _, match := range matches {
-				mw := model.MatchWeight{
-					RoleIdxs: match,
-					Weight:   1.0,
-				}
-				mo.ScheduledMatches = append(mo.ScheduledMatches, mw)
-			}
-			mo.save()
-			slog.Info("マッチング最適化が成功しました", "attempts", attempt+1)
-			return nil
-		}
-	}
-
-	if bestMatches != nil {
-		for _, match := range bestMatches {
-			mw := model.MatchWeight{
-				RoleIdxs: match,
-				Weight:   1.0,
-			}
-			mo.ScheduledMatches = append(mo.ScheduledMatches, mw)
-		}
-		mo.save()
-		slog.Info("最良の解を採用します", "bestDeviation", bestDeviation)
-		return nil
-	}
-	return errors.New("最適なマッチングが見つかりませんでした")
+	mo.ScheduledMatches = []model.MatchWeight{}
+	mo.mu.Unlock()
+	return mo.append()
 }
 
 func (mo *MatchOptimizer) append() error {
 	mo.mu.Lock()
 	defer mo.mu.Unlock()
+
 	theoretical, roles := util.CalcTheoretical(mo.RoleNumMap, mo.GameCount, mo.TeamCount)
 	slog.Info("各役職の理論値を計算しました", "theoretical", theoretical)
 
 	maxAttempts := mo.GameCount * mo.TeamCount * 5
 	var bestMatches []map[model.Role][]int
-	bestDeviation := -1.0
+	bestDeviation := math.MaxFloat64
 	slog.Info("マッチング最適化を開始します", "attempts", maxAttempts)
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
-		matches, counts, success := util.GenerateMatches(mo.GameCount, mo.TeamCount, roles, theoretical)
-		deviation := util.CalcDeviation(counts, theoretical)
-
+		matches, deviation := util.GenerateMatches(mo.GameCount, mo.TeamCount, roles, theoretical)
 		if bestMatches == nil || deviation < bestDeviation {
-			slog.Info("より良い解が見つかりました", "deviation", deviation)
+			slog.Info("より良い解が見つかりました", "deviation", deviation, "attempt", attempt)
 			bestMatches = matches
 			bestDeviation = deviation
-		}
-
-		if success {
-			for _, match := range matches {
-				mw := model.MatchWeight{
-					RoleIdxs: match,
-					Weight:   1.0,
-				}
-				mo.ScheduledMatches = append(mo.ScheduledMatches, mw)
-			}
-			mo.save()
-			slog.Info("マッチング最適化が成功しました", "attempts", attempt+1)
-			return nil
 		}
 	}
 

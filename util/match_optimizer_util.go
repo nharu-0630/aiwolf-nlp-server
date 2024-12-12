@@ -1,7 +1,7 @@
 package util
 
 import (
-	"log/slog"
+	"math"
 	"math/rand"
 
 	"github.com/kano-lab/aiwolf-nlp-server/model"
@@ -38,78 +38,60 @@ func IdxMatchToTeamNameMatch(idxTeamMap map[int]string, match map[model.Role][]i
 	return teamMatch
 }
 
-func findBestTeam(
-	availableTeams []int,
-	usedTeams map[int]bool,
-	teamRoleCounts map[int]map[model.Role]int,
-	role model.Role,
+func findBestIdx(
+	idxs map[int]bool,
+	idxRoleCounts map[int]map[model.Role]int,
+	targetRole model.Role,
 	theoretical map[model.Role]float64,
 ) int {
-	bestTeam := -1
-	minDeviation := -1.0
-	minSubDeviation := -1
-	for _, team := range availableTeams {
-		slog.Info("usedTeams", "usedTeams", usedTeams)
-		if usedTeams[team] {
-			slog.Info("continue team", "team", team)
+	bestIdx := -1
+	minDeviation := math.MaxFloat64
+	minSubDeviation := 0
+	for idx, state := range idxs {
+		if !state {
 			continue
 		}
-
-		// 理論値を超える場合はスキップ
-		if float64(teamRoleCounts[team][role]) >= theoretical[role] {
-			slog.Info("continue role", "role", role)
-			continue
-		}
-
 		// 全ロールの理論値からの偏差を計算
-		deviation := 0.0
-		for r, theoreticalValue := range theoretical {
-			currentCount := float64(teamRoleCounts[team][r])
-			if r == role {
-				currentCount++
+		deviationByTheoretical := 0.0
+		for role, value := range theoretical {
+			count := float64(idxRoleCounts[idx][role])
+			if role == targetRole {
+				count++
 			}
-			deviation += (currentCount - theoreticalValue) * (currentCount - theoreticalValue)
+			deviationByTheoretical += (count - value) * (count - value)
 		}
-
-		subDeviation := 0
-		for _, count := range teamRoleCounts[team] {
-			subDeviation += count
+		// 最も偏差が小さいチームを選択
+		deviationByTeams := 0
+		for _, count := range idxRoleCounts[idx] {
+			deviationByTeams += count
 		}
-
-		if bestTeam == -1 || (deviation < minDeviation && subDeviation <= minSubDeviation) {
-			bestTeam = team
-			minDeviation = deviation
-			minSubDeviation = subDeviation
+		if bestIdx == -1 || (deviationByTheoretical < minDeviation && deviationByTeams <= minSubDeviation) {
+			bestIdx = idx
+			minDeviation = deviationByTheoretical
+			minSubDeviation = deviationByTeams
 		}
-
-		slog.Info("usedTeams", "usedTeams", usedTeams)
 	}
-	return bestTeam
+	return bestIdx
 }
 
-func GenerateMatches(gameCount int, teamCount int, roles []model.Role, theoretical map[model.Role]float64) ([]map[model.Role][]int, map[int]map[model.Role]int, bool) {
-	counts := make(map[int]map[model.Role]int)
+func GenerateMatches(gameCount int, teamCount int, roles []model.Role, theoretical map[model.Role]float64) ([]map[model.Role][]int, float64) {
+	matches := []map[model.Role][]int{}
+	failed := false
+
+	idxRoleCounts := make(map[int]map[model.Role]int)
 	for i := 0; i < teamCount; i++ {
-		counts[i] = make(map[model.Role]int)
+		idxRoleCounts[i] = make(map[model.Role]int)
 		for role := range theoretical {
-			counts[i][role] = 0
+			idxRoleCounts[i][role] = 0
 		}
 	}
 
-	matches := []map[model.Role][]int{}
-	success := true
-
 	for i := 0; i < gameCount; i++ {
-		availableTeams := make([]int, teamCount)
-		for j := 0; j < teamCount; j++ {
-			availableTeams[j] = j
-		}
-		rand.Shuffle(len(availableTeams), func(i, j int) {
-			availableTeams[i], availableTeams[j] = availableTeams[j], availableTeams[i]
-		})
-
 		match := make(map[model.Role][]int)
-		usedTeams := make(map[int]bool)
+		idxs := make(map[int]bool)
+		for j := 0; j < teamCount; j++ {
+			idxs[j] = true
+		}
 
 		shuffledRoles := append([]model.Role{}, roles...)
 		rand.Shuffle(len(shuffledRoles), func(i, j int) {
@@ -117,30 +99,29 @@ func GenerateMatches(gameCount int, teamCount int, roles []model.Role, theoretic
 		})
 
 		for _, role := range shuffledRoles {
-			bestTeam := findBestTeam(availableTeams, usedTeams, counts, role, theoretical)
-			if bestTeam == -1 {
-				success = false
+			bestIdx := findBestIdx(idxs, idxRoleCounts, role, theoretical)
+			if bestIdx == -1 {
+				failed = true
 				break
 			}
-			match[role] = append(match[role], bestTeam)
-			usedTeams[bestTeam] = true
-			counts[bestTeam][role]++
+			match[role] = append(match[role], bestIdx)
+			idxs[bestIdx] = true
+			idxRoleCounts[bestIdx][role]++
 		}
-
-		if !success {
+		if failed {
 			break
 		}
-
 		matches = append(matches, match)
 	}
-	return matches, counts, true
+	deviation := CalcDeviation(idxRoleCounts, theoretical)
+	return matches, deviation
 }
 
 func CalcDeviation(counts map[int]map[model.Role]int, theoretical map[model.Role]float64) float64 {
+	// 偏差を計算
 	if len(counts) == 0 {
 		return -1.0
 	}
-
 	deviation := 0.0
 	for _, roleCounts := range counts {
 		for role, theoreticalValue := range theoretical {
