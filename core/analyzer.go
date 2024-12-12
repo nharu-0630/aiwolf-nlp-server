@@ -38,7 +38,11 @@ func Analyzer(config model.Config) {
 				}
 			}
 		}
-		slog.Info("スケジュールされた役職を取得しました", "idx", idx, "roles", scheduledRoles)
+		sum := 0
+		for _, count := range scheduledRoles {
+			sum += count
+		}
+		slog.Info("スケジュールされた役職を取得しました", "idx", idx, "roles", scheduledRoles, "sum", sum)
 
 		endedRoles := make(map[model.Role]int)
 		for _, match := range mo.EndedMatches {

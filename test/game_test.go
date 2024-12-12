@@ -111,7 +111,4 @@ func TestInfiniteGame(t *testing.T) {
 			}
 		}
 	}
-
-	time.Sleep(5 * time.Second)
-	t.Log("Test completed successfully")
 }

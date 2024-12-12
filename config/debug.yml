@@ -49,7 +49,7 @@ deprecated_log_service:
 
 match_optimizer:
   enable: false # マッチオプティマイザを有効にするか
-  team_count: 5 # 参加するチーム数
-  game_count: 30 # 全体のゲーム数
+  team_count: 7 # 参加するチーム数
+  game_count: 210 # 全体のゲーム数
   output_path: "./../log/match_optimizer.json" # マッチ履歴の出力ファイル
   infinite_loop: false # スケジュールされたマッチがすべて終了した場合に全体のゲーム数分のゲームを追加するか
