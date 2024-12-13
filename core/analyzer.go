@@ -55,7 +55,7 @@ func Analyzer(config model.Config) {
 			}
 		}
 		sum = 0
-		for _, count := range scheduledRoles {
+		for _, count := range endedRoles {
 			sum += count
 		}
 		slog.Info("終了した役職を取得しました", "idx", idx, "roles", endedRoles, "sum", sum)
