@@ -158,6 +158,44 @@ func Analyzer(config model.Config) {
 	}
 }
 
+func Reduction(src model.Config, dst model.Config) {
+	Analyzer(dst)
+
+	srcData, err := os.ReadFile(src.MatchOptimizer.OutputPath)
+	if err != nil {
+		slog.Warn("マッチオプティマイザの読み込みに失敗しました", "error", err)
+		return
+	}
+	var srcMo MatchOptimizer
+	if err := json.Unmarshal(srcData, &srcMo); err != nil {
+		slog.Error("マッチオプティマイザのパースに失敗しました", "error", err)
+		return
+	}
+
+	dstData, err := os.ReadFile(dst.MatchOptimizer.OutputPath)
+	if err != nil {
+		slog.Warn("マッチオプティマイザの読み込みに失敗しました", "error", err)
+		return
+	}
+	var dstMo MatchOptimizer
+	if err := json.Unmarshal(dstData, &dstMo); err != nil {
+		slog.Error("マッチオプティマイザのパースに失敗しました", "error", err)
+		return
+	}
+
+	for _, srcMatch := range srcMo.EndedMatches {
+		for i, dstMatch := range dstMo.ScheduledMatches {
+			if dstMatch.Equal(model.MatchWeight{RoleIdxs: srcMatch}) {
+				dstMo.ScheduledMatches = append(dstMo.ScheduledMatches[:i], dstMo.ScheduledMatches[i+1:]...)
+				slog.Info("重複したマッチを削除しました", "match", srcMatch)
+			}
+		}
+	}
+
+	dstMo.save()
+	Analyzer(dst)
+}
+
 type Count struct {
 	Succeed int
 	None    int

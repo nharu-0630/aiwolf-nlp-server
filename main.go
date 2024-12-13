@@ -16,10 +16,13 @@ var (
 
 func main() {
 	var (
-		configPath   = flag.String("c", "./default.yml", "設定ファイルのパス")
-		analyzerMode = flag.Bool("a", false, "解析モード")
-		showVersion  = flag.Bool("v", false, "バージョンを表示")
-		showHelp     = flag.Bool("h", false, "ヘルプを表示")
+		configPath    = flag.String("c", "./default.yml", "設定ファイルのパス")
+		analyzerMode  = flag.Bool("a", false, "解析モード")
+		reductionMode = flag.Bool("r", false, "縮約モード")
+		srcConfigPath = flag.String("s", "", "ソース設定ファイルのパス")
+		dstConfigPath = flag.String("d", "", "デスティネーション設定ファイルのパス")
+		showVersion   = flag.Bool("v", false, "バージョンを表示")
+		showHelp      = flag.Bool("h", false, "ヘルプを表示")
 	)
 	flag.Parse()
 
@@ -42,6 +45,19 @@ func main() {
 
 	if *analyzerMode {
 		core.Analyzer(*config)
+		return
+	}
+
+	if *reductionMode {
+		srcConfig, err := model.LoadFromPath(*srcConfigPath)
+		if err != nil {
+			panic(err)
+		}
+		dstConfig, err := model.LoadFromPath(*dstConfigPath)
+		if err != nil {
+			panic(err)
+		}
+		core.Reduction(*srcConfig, *dstConfig)
 		return
 	}
 
